@@ -1,5 +1,5 @@
 import { db } from './index';
-import { companies, users, destinations, trips } from './schema';
+import { companies, users, destinations, trips, itineraryDays, tripItems } from './schema';
 import bcrypt from 'bcryptjs';
 
 async function seed() {
@@ -104,9 +104,14 @@ async function seed() {
     const tripData = [
         {
             destinationId: createdDestinations[0].id, // Bali
+            code: 'BALI001',
+            region: 'Southeast Asia',
             title: 'Bali Paradise - 6 Days 5 Nights',
             durationDays: 6,
-            description: 'Experience the best of Bali with this comprehensive package including cultural sites, beach relaxation, and adventure activities.',
+            durationNights: 5,
+            destinations: ['Bali', 'Ubud', 'Seminyak'],
+            shortDescription: 'Culture, beaches and adventure',
+            overview: 'Experience the best of Bali with this comprehensive package including cultural sites, beach relaxation, and adventure activities.',
             itinerary: [
                 {
                     day: 1,
@@ -137,12 +142,18 @@ async function seed() {
                 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
                 'https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=800&q=80',
             ],
+            highlights: ['Ubud', 'Beaches', 'Temples'],
         },
         {
             destinationId: createdDestinations[1].id, // Maldives
+            code: 'MALD001',
+            region: 'South Asia',
             title: 'Maldives Luxury Escape - 5 Days 4 Nights',
             durationDays: 5,
-            description: 'Ultimate luxury experience in Maldives with overwater villas and premium amenities.',
+            durationNights: 4,
+            destinations: ['Maldives', 'Male'],
+            shortDescription: 'Ultimate luxury in paradise',
+            overview: 'Ultimate luxury experience in Maldives with overwater villas and premium amenities.',
             itinerary: [
                 {
                     day: 1,
@@ -167,12 +178,18 @@ async function seed() {
                 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&q=80',
                 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&q=80',
             ],
+            highlights: ['Beaches', 'Luxury', 'Diving'],
         },
         {
             destinationId: createdDestinations[2].id, // Dubai
+            code: 'DXB001',
+            region: 'Middle East',
             title: 'Dubai Extravaganza - 4 Days 3 Nights',
             durationDays: 4,
-            description: 'Discover the marvels of Dubai with city tours, desert safari, and luxury shopping.',
+            durationNights: 3,
+            destinations: ['Dubai'],
+            shortDescription: 'City of gold and desert adventures',
+            overview: 'Discover the marvels of Dubai with city tours, desert safari, and luxury shopping.',
             itinerary: [
                 {
                     day: 1,
@@ -197,12 +214,18 @@ async function seed() {
                 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&q=80',
                 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=800&q=80',
             ],
+            highlights: ['City', 'Shopping', 'Desert'],
         },
         {
             destinationId: createdDestinations[3].id, // Switzerland
+            code: 'SWIZ001',
+            region: 'Europe',
             title: 'Swiss Alps Adventure - 7 Days 6 Nights',
             durationDays: 7,
-            description: 'Experience the breathtaking beauty of Swiss Alps with scenic train rides and mountain adventures.',
+            durationNights: 6,
+            destinations: ['Zurich', 'Lucerne', 'Interlaken'],
+            shortDescription: 'Mountains, chocolate and trains',
+            overview: 'Experience the breathtaking beauty of Swiss Alps with scenic train rides and mountain adventures.',
             itinerary: [
                 {
                     day: 1,
@@ -227,12 +250,18 @@ async function seed() {
                 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
                 'https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=800&q=80',
             ],
+            highlights: ['Mountains', 'Nature', 'Scenery'],
         },
         {
             destinationId: createdDestinations[4].id, // Thailand
+            code: 'THAI001',
+            region: 'Southeast Asia',
             title: 'Amazing Thailand - 6 Days 5 Nights',
             durationDays: 6,
-            description: 'Explore bustling Bangkok and tropical paradise of Phuket in one amazing journey.',
+            durationNights: 5,
+            destinations: ['Bangkok', 'Pattaya'],
+            shortDescription: 'Temples, food and culture',
+            overview: 'Explore bustling Bangkok and tropical paradise of Phuket in one amazing journey.',
             itinerary: [
                 {
                     day: 1,
@@ -257,11 +286,69 @@ async function seed() {
                 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=800&q=80',
                 'https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?w=800&q=80',
             ],
+            highlights: ['Culture', 'Food', 'Temples'],
         },
     ];
 
-    await db.insert(trips).values(tripData);
-    console.log('✅ Created trips');
+    for (const trip of tripData) {
+        // Insert trip main data
+        const [createdTrip] = await db.insert(trips).values({
+            code: trip.code,
+            destinationId: trip.destinationId,
+            title: trip.title,
+            region: trip.region,
+            destinations: trip.destinations,
+            durationDays: trip.durationDays,
+            durationNights: trip.durationNights,
+            shortDescription: trip.shortDescription,
+            overview: trip.overview,
+            highlights: trip.highlights,
+            basePrice: trip.basePrice,
+            maxCapacity: trip.maxCapacity,
+            season: trip.season,
+            imageUrl: trip.imageUrl,
+            galleryUrls: trip.galleryUrls,
+        }).returning();
+
+        // Insert itinerary days
+        if (trip.itinerary && trip.itinerary.length > 0) {
+            await db.insert(itineraryDays).values(
+                trip.itinerary.map(day => ({
+                    tripId: createdTrip.id,
+                    day: day.day,
+                    title: day.title,
+                    description: day.description,
+                    activities: day.activities,
+                }))
+            );
+        }
+
+        // Insert inclusions
+        if (trip.inclusions && trip.inclusions.length > 0) {
+            await db.insert(tripItems).values(
+                trip.inclusions.map((item, idx) => ({
+                    tripId: createdTrip.id,
+                    type: 'inclusion',
+                    item: item,
+                    displayOrder: idx
+                }))
+            );
+        }
+
+        // Insert exclusions
+        if (trip.exclusions && trip.exclusions.length > 0) {
+            await db.insert(tripItems).values(
+                trip.exclusions.map((item, idx) => ({
+                    tripId: createdTrip.id,
+                    type: 'exclusion',
+                    item: item,
+                    displayOrder: idx
+                }))
+            );
+        }
+    }
+
+    console.log('✅ Created trips with itinerary and items');
 
     console.log('\n🎉 Seed completed successfully!');
     console.log('\n📝 Demo credentials:');
