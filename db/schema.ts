@@ -71,6 +71,7 @@ export const trips = pgTable('trips', {
     season: text('season').default('all_year'),
     imageUrl: text('image_url'),
     galleryUrls: jsonb('gallery_urls').$type<string[]>(),
+    pdfUrl: text('pdf_url'),
     featured: boolean('featured').default(false),
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),

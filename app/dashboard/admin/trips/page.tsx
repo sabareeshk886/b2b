@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Filter, Edit, Trash2, Eye, MapPin } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, Eye, MapPin, FileText } from 'lucide-react';
 
 type Trip = {
     id: string;
@@ -14,6 +14,7 @@ type Trip = {
     durationNights: number;
     isActive: boolean;
     featured: boolean;
+    pdfUrl?: string | null;
 };
 
 export default function AdminTripsPage() {
@@ -167,6 +168,17 @@ export default function AdminTripsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-end space-x-2">
+                                            {trip.pdfUrl && (
+                                                <a
+                                                    href={trip.pdfUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-600"
+                                                    title="View PDF Itinerary"
+                                                >
+                                                    <FileText className="w-5 h-5" />
+                                                </a>
+                                            )}
                                             <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
                                                 <Eye className="w-5 h-5" />
                                             </button>
