@@ -5,7 +5,12 @@ import { db } from '@/db';
 import { trips } from '@/db/schema';
 
 export default async function HomePage() {
-    const featuredTrips = await db.select().from(trips).limit(8);
+    let featuredTrips: any[] = [];
+    try {
+        featuredTrips = await db.select().from(trips).limit(8);
+    } catch (error) {
+        console.error("Database connection timed out during Vercel prerender:", error);
+    }
     
     // Helper to get a rich fallback image based on region
     const getTripImg = (region: string, code: string) => {
