@@ -18,8 +18,8 @@ try {
     const worksheet = workbook.Sheets[sheetName];
     const rows = xlsx.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
     
-    let currentTripId = null;
-    let currentTripCode = null;
+    let currentTripId: string | null = null;
+    let currentTripCode: string | null = null;
     
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -78,11 +78,11 @@ try {
            let inclusionsRaw = parts[0].replace('INCLUSION :', '').trim();
            let exclusionsRaw = parts.length > 1 ? parts[1].split('NOTE')[0].trim() : ''; // rudimentary split
            
-           let incList = inclusionsRaw.split('\\n').map(s => s.trim()).filter(s => s);
-           let excList = exclusionsRaw.split('\\n').map(s => s.trim()).filter(s => s);
+           let incList = inclusionsRaw.split('\\n').map((s: string) => s.trim()).filter((s: string) => s);
+           let excList = exclusionsRaw.split('\\n').map((s: string) => s.trim()).filter((s: string) => s);
            
            if(incList.length > 0) {
-             incList.forEach(inc => {
+             incList.forEach((inc: string) => {
                if(inc && inc.length > 3) {
                  let safeInc = inc.replace(/'/g, "''");
                  sql += `INSERT INTO trip_items (id, trip_id, type, item) VALUES ('${uuid()}', '${currentTripId}', 'inclusion', '${safeInc}');\n`;

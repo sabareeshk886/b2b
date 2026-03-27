@@ -134,6 +134,9 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
         references: [destinations.id],
     }),
     bookings: many(bookings),
+    itineraryDays: many(itineraryDays),
+    tripPricing: many(tripPricing),
+    tripItems: many(tripItems),
 }));
 
 export const quotesRelations = relations(quotes, ({ one }) => ({
