@@ -1,0 +1,3 @@
+Testing pooler URL (No SSL)
+Error with pooler URL (No SSL): PostgresError: Tenant or user not found
+Tenant or user not found
