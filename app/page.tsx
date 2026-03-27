@@ -1,7 +1,27 @@
 import Link from 'next/link';
-import { ArrowRight, Globe, Shield, TrendingUp, Users, Zap, CreditCard, Sparkles } from 'lucide-react';
+import { ArrowRight, Globe, Shield, TrendingUp, Users, Zap, CreditCard, Sparkles, MapPin, Calendar } from 'lucide-react';
+import Image from 'next/image';
+import { db } from '@/db';
+import { trips } from '@/db/schema';
 
-export default function HomePage() {
+export default async function HomePage() {
+    const featuredTrips = await db.select().from(trips).limit(8);
+    
+    // Helper to get a rich fallback image based on region
+    const getTripImg = (region: string, code: string) => {
+        const hash = code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        if (region.includes('NORTH') || region.includes('AGRA') || region.includes('DELHI')) {
+            const arr = [
+                'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&q=80',
+                'https://images.unsplash.com/photo-1587474265402-9e6b7d584844?w=800&q=80',
+                'https://images.unsplash.com/photo-1596396825227-817882209772?w=800&q=80',
+                'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80'
+            ];
+            return arr[hash % arr.length];
+        }
+        return 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80';
+    };
+
     return (
         <div className="min-h-screen bg-white">
             {/* Header */}
@@ -65,6 +85,64 @@ export default function HomePage() {
                                     {stat.value}
                                 </div>
                                 <div className="text-sm font-medium text-white/80">{stat.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Featured Trips Section */}
+            <section className="py-20 px-6 bg-gray-50">
+                <div className="container mx-auto">
+                    <div className="flex items-end justify-between mb-12">
+                        <div>
+                            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">Featured <span className="text-emerald-600">Packages</span></h2>
+                            <p className="text-xl text-gray-600 font-light">Explore our newest wholesale itineraries</p>
+                        </div>
+                        <Link href="/register" className="hidden md:inline-flex items-center text-emerald-600 font-bold hover:text-emerald-700 transition-colors">
+                            View All <ArrowRight className="ml-2 w-5 h-5" />
+                        </Link>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {featuredTrips.map((trip) => (
+                            <div key={trip.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full overflow-hidden group">
+                                <div className="h-48 md:h-56 bg-gray-200 relative overflow-hidden">
+                                    <Image
+                                        src={getTripImg(trip.region || '', trip.code)}
+                                        alt={trip.title}
+                                        fill
+                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                    />
+                                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-gray-900 shadow-lg border border-gray-100 uppercase tracking-wide">
+                                        {trip.code}
+                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-70 group-hover:opacity-90 transition-opacity" />
+                                    <div className="absolute bottom-4 left-4 text-white font-medium flex items-center shadow-sm">
+                                        <MapPin className="w-4 h-4 mr-1 text-emerald-400 drop-shadow-md" />
+                                        <span className="drop-shadow-md font-bold uppercase tracking-wider text-sm">{trip.region}</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                                        {trip.title}
+                                    </h3>
+
+                                    <div className="flex items-center text-sm text-gray-500 mb-6 mt-auto">
+                                        {(trip.durationDays !== null && trip.durationDays > 0) && (
+                                            <div className="flex items-center bg-orange-50 text-orange-700 px-3 py-1.5 rounded-lg font-bold">
+                                                <Calendar className="w-4 h-4 mr-2" />
+                                                <span>{trip.durationDays} Days / {trip.durationNights} Nights</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <Link href="/register" className="w-full bg-gray-50 text-gray-700 py-3 rounded-xl font-bold text-sm flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all border border-gray-100 group-hover:border-emerald-600">
+                                        Login for B2B Pricing
+                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                </div>
                             </div>
                         ))}
                     </div>
