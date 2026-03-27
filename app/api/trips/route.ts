@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
         const allTrips = await query;
 
         return NextResponse.json({ trips: allTrips });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching trips:', error);
-        return NextResponse.json({ error: 'Failed to fetch trips' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to fetch trips', details: error.message || error.toString() }, { status: 500 });
     }
 }
 
