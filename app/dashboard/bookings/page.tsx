@@ -32,63 +32,72 @@ export default function BookingsPage() {
     ];
 
     return (
-        <div>
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Bookings</h1>
-                <p className="text-gray-600">Manage all your customer bookings</p>
+        <div className="space-y-10">
+            <div>
+                <h1 className="text-3xl font-bold text-[#222222] mb-1">Bookings</h1>
+                <p className="text-[#717171] font-medium">Manage and track your active customer trips</p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                    { label: 'Total Bookings', value: '24', icon: Package, color: 'from-emerald-500 to-green-500' },
-                    { label: 'Confirmed', value: '18', icon: Calendar, color: 'from-green-500 to-teal-500' },
-                    { label: 'Pending', value: '4', icon: Clock, color: 'from-teal-500 to-emerald-500' },
-                    { label: 'Total PAX', value: '52', icon: Users, color: 'from-emerald-600 to-green-600' },
+                    { label: 'Total Bookings', value: '24', icon: Package, color: 'text-blue-600 bg-blue-50' },
+                    { label: 'Confirmed', value: '18', icon: Calendar, color: 'text-[#006A4E] bg-emerald-50' },
+                    { label: 'Pending', value: '4', icon: Clock, color: 'text-orange-600 bg-orange-50' },
+                    { label: 'Total PAX', value: '52', icon: Users, color: 'text-purple-600 bg-purple-50' },
                 ].map((stat, idx) => (
-                    <div key={idx} className="bg-white border-2 border-gray-200 p-6 rounded-2xl hover:shadow-xl hover:border-emerald-300 transition-all">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center mb-4`}>
-                            <stat.icon className="w-6 h-6 text-white" />
+                    <div key={idx} className="bg-white border border-[#EBEBEB] p-6 rounded-2xl hover:shadow-airbnb transition-all cursor-pointer group">
+                        <div className={`w-12 h-12 rounded-xl ${stat.color} flex items-center justify-center mb-4`}>
+                            <stat.icon className="w-6 h-6" />
                         </div>
-                        <p className="text-sm text-gray-600 mb-1 font-medium">{stat.label}</p>
-                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                        <p className="text-sm font-medium text-[#717171] mb-1">{stat.label}</p>
+                        <p className="text-3xl font-bold text-[#222222]">{stat.value}</p>
                     </div>
                 ))}
             </div>
 
             {/* Bookings List */}
-            <div className="bg-white border-2 border-gray-200 p-6 rounded-2xl">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Bookings</h2>
-                <div className="space-y-4">
+            <div className="bg-white border border-[#EBEBEB] p-8 rounded-3xl">
+                <h2 className="text-xl font-bold text-[#222222] mb-8">Confirmed & Upcoming</h2>
+                <div className="space-y-6">
                     {bookings.map((booking, idx) => (
-                        <div key={idx} className="border-2 border-gray-200 p-6 rounded-xl hover:border-emerald-300 hover:shadow-lg transition-all cursor-pointer">
-                            <div className="flex items-start justify-between mb-4">
+                        <div key={idx} className="group border border-[#EBEBEB] p-6 rounded-2xl hover:border-[#222222] hover:shadow-airbnb transition-all cursor-pointer">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                                 <div>
-                                    <div className="flex items-center space-x-3 mb-2">
-                                        <h3 className="text-lg font-bold text-gray-900">{booking.customer}</h3>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' :
-                                                'bg-amber-100 text-amber-700'
-                                            }`}>
+                                    <div className="flex items-center space-x-3 mb-1">
+                                        <h3 className="text-lg font-bold text-[#222222]">{booking.customer}</h3>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                            booking.status === 'confirmed' ? 'bg-emerald-50 text-[#006A4E]' : 'bg-orange-50 text-orange-600'
+                                        }`}>
                                             {booking.status}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-600 font-medium">{booking.id}</p>
+                                    <p className="text-xs text-[#717171] font-bold tracking-tight uppercase">{booking.id}</p>
                                 </div>
-                                <p className="text-2xl font-bold text-gray-900">{booking.amount}</p>
+                                <div className="text-left md:text-right">
+                                    <p className="text-2xl font-bold text-[#222222]">{booking.amount}</p>
+                                    <p className="text-xs text-[#717171] font-medium mt-1">Total Package Price</p>
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                    <MapPin className="w-4 h-4 text-emerald-600" />
-                                    <span>{booking.destination}</span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-[#EBEBEB]">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
+                                        <MapPin className="w-4 h-4 text-[#006A4E]" />
+                                    </div>
+                                    <span className="text-sm font-semibold text-[#222222]">{booking.destination}</span>
                                 </div>
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                    <Calendar className="w-4 h-4 text-emerald-600" />
-                                    <span>{booking.travelDate}</span>
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
+                                        <Calendar className="w-4 h-4 text-[#006A4E]" />
+                                    </div>
+                                    <span className="text-sm font-semibold text-[#222222]">{booking.travelDate}</span>
                                 </div>
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                    <Users className="w-4 h-4 text-emerald-600" />
-                                    <span>{booking.pax} PAX</span>
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
+                                        <Users className="w-4 h-4 text-[#006A4E]" />
+                                    </div>
+                                    <span className="text-sm font-semibold text-[#222222]">{booking.pax} PAX</span>
                                 </div>
                             </div>
                         </div>
@@ -98,3 +107,4 @@ export default function BookingsPage() {
         </div>
     );
 }
+

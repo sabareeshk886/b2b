@@ -4,15 +4,11 @@ import { trips, itineraryDays, tripPricing, tripItems } from '@/db/schema';
 
 export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url);
-        const region = searchParams.get('region');
-        const search = searchParams.get('search');
-
-        let query = db.select().from(trips);
-
-        // Add filters if provided
-        // For now, return all trips
-        const allTrips = await query;
+        const allTrips = await db.query.trips.findMany({
+            with: {
+                tripPricing: true,
+            },
+        });
 
         return NextResponse.json({ trips: allTrips });
     } catch (error: any) {

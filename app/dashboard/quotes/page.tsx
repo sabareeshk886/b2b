@@ -41,75 +41,75 @@ export default function QuotesPage() {
     ];
 
     return (
-        <div>
-            <div className="mb-8 flex items-center justify-between">
+        <div className="space-y-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">My Quotes</h1>
-                    <p className="text-gray-600">Manage all your customer quotes</p>
+                    <h1 className="text-3xl font-bold text-[#222222] mb-1">My Quotes</h1>
+                    <p className="text-[#717171] font-medium">Create and manage customized B2B quotes</p>
                 </div>
-                <button className="px-6 py-3 gradient-primary text-white rounded-xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    Create New Quote
+                <button className="px-8 py-3.5 bg-[#222222] text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95">
+                    + Create New Quote
                 </button>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                    { label: 'Total Quotes', value: '24', icon: FileText, color: 'from-emerald-500 to-green-500' },
-                    { label: 'Confirmed', value: '8', icon: Users, color: 'from-green-500 to-teal-500' },
-                    { label: 'Total Value', value: '₹12.5L', icon: DollarSign, color: 'from-teal-500 to-emerald-500' },
-                    { label: 'Pending', value: '6', icon: Clock, color: 'from-emerald-600 to-green-600' },
+                    { label: 'Total Quotes', value: '24', icon: FileText, color: 'text-blue-600 bg-blue-50' },
+                    { label: 'Confirmed', value: '8', icon: Users, color: 'text-[#006A4E] bg-emerald-50' },
+                    { label: 'Total Value', value: '₹12.5L', icon: DollarSign, color: 'text-orange-600 bg-orange-50' },
+                    { label: 'Pending', value: '6', icon: Clock, color: 'text-purple-600 bg-purple-50' },
                 ].map((stat, idx) => (
-                    <div key={idx} className="bg-white border-2 border-gray-200 p-6 rounded-2xl hover:shadow-xl hover:border-emerald-300 transition-all">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center mb-4`}>
-                            <stat.icon className="w-6 h-6 text-white" />
+                    <div key={idx} className="bg-white border border-[#EBEBEB] p-6 rounded-2xl hover:shadow-airbnb transition-all cursor-pointer group">
+                        <div className={`w-12 h-12 rounded-xl ${stat.color} flex items-center justify-center mb-4`}>
+                            <stat.icon className="w-6 h-6" />
                         </div>
-                        <p className="text-sm text-gray-600 mb-1 font-medium">{stat.label}</p>
-                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                        <p className="text-sm font-medium text-[#717171] mb-1">{stat.label}</p>
+                        <p className="text-3xl font-bold text-[#222222]">{stat.value}</p>
                     </div>
                 ))}
             </div>
 
             {/* Quotes List */}
-            <div className="bg-white border-2 border-gray-200 p-6 rounded-2xl">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">All Quotes</h2>
-                <div className="space-y-4">
+            <div className="bg-white border border-[#EBEBEB] p-8 rounded-3xl">
+                <h2 className="text-xl font-bold text-[#222222] mb-8">Recent Requests</h2>
+                <div className="space-y-6">
                     {quotes.map((quote, idx) => (
-                        <div key={idx} className="border-2 border-gray-200 p-6 rounded-xl hover:border-emerald-300 hover:shadow-lg transition-all">
-                            <div className="flex items-start justify-between mb-4">
-                                <div>
-                                    <div className="flex items-center space-x-3 mb-2">
-                                        <h3 className="text-lg font-bold text-gray-900">{quote.customer}</h3>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${quote.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' :
-                                                quote.status === 'sent' ? 'bg-blue-100 text-blue-700' :
-                                                    quote.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                                        'bg-gray-100 text-gray-700'
-                                            }`}>
+                        <div key={idx} className="group border border-[#EBEBEB] p-6 rounded-2xl hover:border-[#222222] hover:shadow-airbnb transition-all">
+                            <div className="flex flex-col md:flex-row justify-between gap-6 mb-8">
+                                <div className="space-y-1">
+                                    <div className="flex items-center space-x-3">
+                                        <h3 className="text-lg font-bold text-[#222222]">{quote.customer}</h3>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                            quote.status === 'confirmed' ? 'bg-emerald-50 text-[#006A4E]' :
+                                            quote.status === 'sent' ? 'bg-blue-50 text-blue-600' :
+                                            quote.status === 'pending' ? 'bg-orange-50 text-orange-600' :
+                                            'bg-gray-100 text-gray-700'
+                                        }`}>
                                             {quote.status}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-600 font-medium mb-1">{quote.id}</p>
-                                    <p className="text-sm text-gray-600">{quote.destination}</p>
+                                    <p className="text-xs text-[#717171] font-bold tracking-tight uppercase">{quote.id} • {quote.date}</p>
+                                    <p className="text-sm font-semibold text-[#222222]">{quote.destination}</p>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-2xl font-bold text-gray-900 mb-1">{quote.amount}</p>
-                                    <p className="text-sm text-emerald-600 font-semibold">Margin: {quote.margin}</p>
-                                    <p className="text-xs text-gray-500 mt-1">{quote.date}</p>
+                                <div className="text-left md:text-right space-y-1">
+                                    <p className="text-2xl font-bold text-[#222222]">{quote.amount}</p>
+                                    <p className="text-xs font-bold text-[#006A4E] uppercase tracking-wide">Profit Margin: {quote.margin}</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center space-x-2 pt-4 border-t border-gray-200">
-                                <button className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 border-2 border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 transition-all font-semibold">
+                            <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-[#EBEBEB]">
+                                <button className="flex-1 min-w-[120px] flex items-center justify-center space-x-2 px-4 py-2.5 border border-[#EBEBEB] text-[#222222] rounded-xl hover:bg-gray-50 transition-all font-bold text-xs uppercase tracking-wider">
                                     <Eye className="w-4 h-4" />
-                                    <span>View</span>
+                                    <span>Preview Itinerary</span>
                                 </button>
-                                <button className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 border-2 border-green-500 text-green-600 rounded-lg hover:bg-green-50 transition-all font-semibold">
+                                <button className="flex-1 min-w-[120px] flex items-center justify-center space-x-2 px-4 py-2.5 border border-[#EBEBEB] text-[#222222] rounded-xl hover:bg-gray-50 transition-all font-bold text-xs uppercase tracking-wider">
                                     <Download className="w-4 h-4" />
                                     <span>Download PDF</span>
                                 </button>
-                                <button className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 gradient-primary text-white rounded-lg hover:shadow-lg transition-all font-semibold">
+                                <button className="flex-1 min-w-[120px] flex items-center justify-center space-x-2 px-4 py-2.5 bg-[#006A4E] text-white rounded-xl hover:bg-[#005a42] transition-all font-bold text-xs uppercase tracking-wider shadow-sm shadow-emerald-200">
                                     <Send className="w-4 h-4" />
-                                    <span>Send to Client</span>
+                                    <span>Send to Agent</span>
                                 </button>
                             </div>
                         </div>
@@ -119,3 +119,4 @@ export default function QuotesPage() {
         </div>
     );
 }
+

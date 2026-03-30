@@ -5,18 +5,26 @@ import Link from 'next/link';
 import { Search, MapPin, Calendar, ArrowRight, Filter } from 'lucide-react';
 import Image from 'next/image';
 
+type PricingTier = {
+    id: string;
+    minPax: number;
+    maxPax: number | null;
+    pricePerPerson: string;
+};
+
 type Trip = {
     id: string;
     code: string;
     title: string;
     region: string;
     destination?: string;
-    destinations: string[]; // e.g. ["Munnar", "Thekkady"]
+    destinations: string[];
     durationDays: number;
     durationNights: number;
     basePrice: string;
     pdfUrl?: string | null;
     imageUrl?: string | null;
+    tripPricing?: PricingTier[];
 };
 
 // Curated Image Pool for Variety & Relevance
@@ -186,6 +194,15 @@ const REGION_IMAGES: Record<string, string[]> = {
 
 
 
+// Get the starting (lowest tier) price per person from tripPricing
+const getStartingPrice = (trip: Trip): number => {
+    if (!trip.tripPricing || trip.tripPricing.length === 0) {
+        return parseFloat(trip.basePrice) || 0;
+    }
+    const sorted = [...trip.tripPricing].sort((a, b) => a.minPax - b.minPax);
+    return parseFloat(sorted[0].pricePerPerson) || 0;
+};
+
 export default function TripsPage() {
     const [trips, setTrips] = useState<Trip[]>([]);
     const [loading, setLoading] = useState(true);
@@ -226,172 +243,156 @@ export default function TripsPage() {
     });
 
     const getTripImage = (trip: Trip) => {
-        // If image failed to load previously, force fallback
-        if (imgErrors[trip.id]) {
-            return getFallbackImage(trip);
-        }
-
-        // 1. Strict Validation: Ignore DB images unless they are from known reliable sources or purely safe URLs
+        if (imgErrors[trip.id]) return getFallbackImage(trip);
         const dbImage = trip.imageUrl;
         const validDbImage = dbImage && dbImage.startsWith('http') && !dbImage.includes('example.com') && !dbImage.includes('placeholder');
-
         if (validDbImage) return dbImage;
-
         return getFallbackImage(trip);
     };
 
     const getFallbackImage = (trip: Trip) => {
-        // 2. Identify Metadata for matching
-        const region = trip.region?.toUpperCase() || '';
-        const title = trip.title?.toUpperCase() || '';
-        const text = (title + ' ' + region + ' ' + (trip.destinations?.join(' ') || '')).toUpperCase();
-
-        let category = 'DEFAULT';
-
-        // Specific sub-regions first
-        if (text.includes('DUBAI') || text.includes('UAE') || text.includes('ABU DHABI')) category = 'DUBAI';
-        else if (text.includes('BALI') || text.includes('INDONESIA') || text.includes('UBUD')) category = 'BALI';
-        else if (text.includes('THAI') || text.includes('BANGKOK') || text.includes('PHUKET') || text.includes('PATTAYA')) category = 'THAI'; // Thailand
-        else if (text.includes('MALDIVES') || text.includes('MALE')) category = 'MALDIVES';
-        else if (text.includes('VIETNAM') || text.includes('HANOI') || text.includes('HO CHI MINH')) category = 'VIETNAM';
-        else if (text.includes('SINGAPORE')) category = 'SINGAPORE';
-        else if (text.includes('EUROPE') || text.includes('SWITZERLAND') || text.includes('PARIS') || text.includes('ITALY') || text.includes('LONDON') || text.includes('SWISS')) category = 'EUROPE';
-
-        else if (text.includes('KASHMIR') || text.includes('SRINAGAR') || text.includes('GULMARG') || text.includes('SXR')) category = 'KASHMIR';
-        else if (text.includes('LADAKH') || text.includes('LEH')) category = 'HIMACHAL'; // Close enough style
-        else if (text.includes('MANALI') || text.includes('MNL')) category = 'MANALI';
-        else if (text.includes('KASOL') || text.includes('KULLU') || text.includes('KSL')) category = 'KASOL';
-        else if (text.includes('ANDAMAN') || text.includes('PORT BLAIR') || text.includes('HAVELOCK') || text.includes('IXZ')) category = 'ANDAMAN';
-        else if (text.includes('GOA') || text.includes('GOI')) category = 'GOA';
-        else if (text.includes('MUNNAR') || text.includes('KERALA') || text.includes('COCHIN') || text.includes('THEKKADY') || text.includes('ALLEPPEY') || text.includes('COK')) category = 'KERALA';
-        else if (text.includes('MATHERAN') || text.includes('MAT')) category = 'MATHERAN';
-        else if (text.includes('RAJASTHAN') || text.includes('JAIPUR') || text.includes('UDAIPUR') || text.includes('JODHPUR') || text.includes('JAISALMER') || text.includes('JPR') || text.includes('UDR') || text.includes('JSL') || text.includes('JDP') || text.includes('UDP')) category = 'RAJASTHAN';
-        else if (text.includes('AMRITSAR') || text.includes('PUNJAB') || text.includes('AMR')) category = 'PUNJAB';
-        else if (text.includes('CHENNAI') || text.includes('TAMIL') || text.includes('MAA')) category = 'CHENNAI';
-        else if (text.includes('MUMBAI') || text.includes('BOMBAY') || text.includes('BOM')) category = 'MUMBAI';
-        else if (text.includes('AGRA') || text.includes('TAJ') || text.includes('FATEHPUR') || text.includes('AGR') || text.includes('FTP')) category = 'AGRA';
-        else if (text.includes('DELHI') || text.includes('NEW DELHI') || text.includes('DEL')) category = 'DELHI';
-        else if (text.includes('SHIMLA') || text.includes('DHARAMSHALA') || text.includes('DALHOUSIE')) category = 'HIMACHAL';
-        else if (text.includes('MADURAI') || text.includes('HAMPI') || text.includes('KARNATAKA') || text.includes('IXM')) category = 'SOUTH';
-        else if (text.includes('NORTH') || text.includes('VARANASI') || text.includes('VNS')) category = 'NORTH';
-
-        // 3. UUID-based Randomization (More diverse than sequential codes)
         const seedStr = trip.id || trip.code;
         const hash = seedStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const text = (trip.title + ' ' + trip.region + ' ' + (trip.destinations?.join(' ') || '')).toUpperCase();
+        
+        let category = 'DEFAULT';
+        if (text.includes('DUBAI')) category = 'DUBAI';
+        else if (text.includes('BALI')) category = 'BALI';
+        else if (text.includes('THAI')) category = 'THAI';
+        else if (text.includes('MALDIVES')) category = 'MALDIVES';
+        else if (text.includes('VIETNAM')) category = 'VIETNAM';
+        else if (text.includes('SINGAPORE')) category = 'SINGAPORE';
+        else if (text.includes('EUROPE')) category = 'EUROPE';
+        else if (text.includes('KASHMIR')) category = 'KASHMIR';
+        else if (text.includes('MANALI')) category = 'MANALI';
+        else if (text.includes('KASOL')) category = 'KASOL';
+        else if (text.includes('ANDAMAN')) category = 'ANDAMAN';
+        else if (text.includes('GOA')) category = 'GOA';
+        else if (text.includes('KERALA')) category = 'KERALA';
+        else if (text.includes('RAJASTHAN')) category = 'RAJASTHAN';
+        else if (text.includes('PUNJAB')) category = 'PUNJAB';
+        else if (text.includes('CHENNAI')) category = 'CHENNAI';
+        else if (text.includes('AGRA')) category = 'AGRA';
+        else if (text.includes('DELHI')) category = 'DELHI';
 
         const pool = REGION_IMAGES[category] || REGION_IMAGES['DEFAULT'];
-        // Protection against undefined pool
-        return pool ? pool[hash % pool.length] : REGION_IMAGES['DEFAULT'][0];
+        return pool[hash % pool.length];
     }
 
     return (
         <div className="min-h-screen pb-20">
             {/* Header */}
-            <div className="mb-6 md:mb-8">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Trip Catalog</h1>
-                <p className="text-gray-600 text-base md:text-lg">Browse all exclusive B2B itineraries.</p>
+            <div className="mb-10">
+                <h1 className="text-3xl font-bold text-[#222222] mb-1">Trip Catalog</h1>
+                <p className="text-[#717171] font-medium">Browse and customize exclusive B2B itineraries</p>
             </div>
 
-            {/* Controls: Search & Filter */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6 md:mb-8 sticky top-4 z-10 glass p-4 rounded-xl border border-white/50 backdrop-blur-md shadow-sm">
-                <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search by trip code, title, or region..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white shadow-sm"
-                    />
-                </div>
+            {/* Sticky Search & Filter */}
+            <div className="sticky top-24 z-10 bg-white/90 backdrop-blur-md pb-6 pt-2">
+                <div className="flex flex-col md:flex-row gap-4 items-center">
+                    <div className="w-full md:flex-1 relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#717171] group-focus-within:text-[#222222] transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Search by code, title, or region..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-11 pr-4 py-3 border border-[#EBEBEB] rounded-full focus:outline-none focus:border-[#222222] focus:shadow-airbnb transition-all text-sm font-medium"
+                        />
+                    </div>
 
-                {/* Region Filter - Scrollable on mobile */}
-                <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar items-center pr-4 md:pr-0">
-                    {regions.map(region => (
-                        <button
-                            key={region}
-                            onClick={() => setSelectedRegion(region)}
-                            className={`whitespace-nowrap px-5 py-3 rounded-xl font-bold text-sm transition-all border ${selectedRegion === region
-                                ? 'bg-gray-900 text-white border-gray-900 shadow-md transform scale-105'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    <div className="flex overflow-x-auto gap-2 no-scrollbar w-full md:w-auto">
+                        {regions.map(region => (
+                            <button
+                                key={region}
+                                onClick={() => setSelectedRegion(region)}
+                                className={`whitespace-nowrap px-4 py-2 rounded-full font-bold text-xs transition-all border ${
+                                    selectedRegion === region
+                                        ? 'bg-[#222222] text-white border-[#222222] shadow-md'
+                                        : 'bg-white text-[#717171] border-[#EBEBEB] hover:border-[#222222] hover:text-[#222222]'
                                 }`}
-                        >
-                            {region}
-                        </button>
-                    ))}
+                            >
+                                {region}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
             {/* Trip Grid */}
             {loading ? (
                 <div className="text-center py-20">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-                    <p className="text-gray-500 font-medium">Loading itineraries...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006A4E] mx-auto mb-4"></div>
+                    <p className="text-[#717171] font-medium">Loading itineraries...</p>
                 </div>
             ) : filteredTrips.length === 0 ? (
-                <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                    <p className="text-xl text-gray-500 font-semibold">No trips found matching your criteria.</p>
+                <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-[#EBEBEB]">
+                    <p className="text-lg text-[#717171] font-semibold">No trips found matching your criteria.</p>
                     <button
                         onClick={() => { setSearchQuery(''); setSelectedRegion('All'); }}
-                        className="mt-4 text-emerald-600 font-bold hover:underline"
+                        className="mt-4 text-[#006A4E] font-bold hover:underline"
                     >
-                        Clear filters
+                        Clear all filters
                     </button>
                 </div>
             ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                    {filteredTrips.map((trip) => {
-                        const displayImage = getTripImage(trip);
-
-                        return (
-                            <Link
-                                key={trip.id}
-                                href={`/dashboard/trips/${trip.id}`}
-                                className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden active:scale-[0.98] md:active:scale-100 touch-manipulation"
-                            >
-                                <div className="h-48 md:h-56 bg-gray-200 relative overflow-hidden">
-                                    <Image
-                                        src={displayImage}
-                                        alt={trip.title}
-                                        fill
-                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                                        onError={() => setImgErrors(prev => ({ ...prev, [trip.id]: true }))}
-                                    />
-                                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-gray-900 shadow-sm z-10 border border-gray-100 uppercase tracking-wide">
-                                        {trip.code}
-                                    </div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                                    <div className="absolute bottom-4 left-4 text-white font-medium text-sm flex items-center shadow-sm">
-                                        <MapPin className="w-4 h-4 mr-1 text-emerald-400 drop-shadow-md" />
-                                        <span className="drop-shadow-md font-bold uppercase tracking-wider text-xs">{trip.region}</span>
-                                    </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+                    {filteredTrips.map((trip) => (
+                        <Link
+                            key={trip.id}
+                            href={`/dashboard/trips/${trip.id}`}
+                            className="flex flex-col group cursor-pointer"
+                        >
+                            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-100 mb-3 transition-all">
+                                <Image
+                                    src={getTripImage(trip)}
+                                    alt={trip.title}
+                                    fill
+                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                                    onError={() => setImgErrors(prev => ({ ...prev, [trip.id]: true }))}
+                                />
+                                <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-black text-[#222222] shadow-sm z-10 border border-[#EBEBEB] tracking-wider">
+                                    {trip.code}
                                 </div>
+                                <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
 
-                                <div className="p-4 md:p-5 flex-1 flex flex-col">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">
-                                        {trip.title}
-                                    </h3>
-
-                                    <div className="flex items-center text-sm text-gray-500 mb-6 mt-auto">
-                                        {trip.durationDays > 0 && (
-                                            <div className="flex items-center bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-bold">
-                                                <Calendar className="w-3.5 h-3.5 mr-1.5" />
-                                                <span>{trip.durationDays} Days / {trip.durationNights} Nights</span>
+                            <div className="flex flex-col space-y-1">
+                                <div className="flex justify-between items-start gap-2">
+                                    <h3 className="font-bold text-[#222222] truncate text-base leading-tight group-hover:text-[#006A4E] transition-colors">{trip.title}</h3>
+                                </div>
+                                
+                                <div className="flex items-center text-[#717171] text-sm font-medium">
+                                    <MapPin className="w-3 h-3 mr-1" />
+                                    {trip.region}
+                                </div>
+                                
+                                <div className="flex items-center text-[#717171] text-sm font-medium">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {trip.durationDays}D / {trip.durationNights}N
+                                </div>
+                                
+                                <div className="pt-2 flex items-center justify-between">
+                                    {(() => {
+                                        const sp = getStartingPrice(trip);
+                                        return sp > 0 ? (
+                                            <div>
+                                                <span className="text-[10px] font-bold text-[#717171] uppercase tracking-widest">From</span>
+                                                <p className="text-sm font-black text-[#222222]">₹{sp.toLocaleString()}<span className="text-[10px] font-bold text-[#717171]">/person</span></p>
                                             </div>
-                                        )}
-                                    </div>
-
-                                    <div className="w-full bg-gray-50 text-gray-700 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all border border-gray-100 group-hover:border-emerald-600 group-hover:shadow-emerald-200 group-hover:shadow-lg active:bg-emerald-700 active:text-white md:active:bg-gray-50 md:active:text-gray-700">
-                                        View Itinerary
-                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                                    </div>
+                                        ) : (
+                                            <span className="text-xs font-black text-orange-500">On Request</span>
+                                        );
+                                    })()}
+                                    <ArrowRight className="w-4 h-4 text-[#222222] group-hover:translate-x-1 transition-transform" />
                                 </div>
-                            </Link>
-                        );
-                    })}
+                            </div>
+                        </Link>
+                    ))}
                 </div>
             )}
         </div>
     );
 }
+
