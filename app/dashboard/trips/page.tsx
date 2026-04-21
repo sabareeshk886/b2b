@@ -50,11 +50,7 @@ const REGION_IMAGES: Record<string, string[]> = {
         '/images/catalog/mat.jpg',
     ],
     'AGRA': [
-        'https://unsplash.com/photos/_Qtgj2nXqyY/download?force=true&w=800', // Woman at Taj
-        'https://unsplash.com/photos/qCKSpvJfNtU/download?force=true&w=800', // Inlay art
-        'https://unsplash.com/photos/pqY0n4KNO0s/download?force=true&w=800', // Taj entrance
-        'https://unsplash.com/photos/B3-lUYDbyDo/download?force=true&w=800', // Agra Fort
-        'https://unsplash.com/photos/8goGYCLzrLs/download?force=true&w=800', // Fort walls
+        '/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/del%203.jpg', '/images/catalog/raj%201.jpg', '/images/catalog/raj%202.jpg',
     ],
     'RAJASTHAN': [
         '/images/catalog/raj%201.jpg',
@@ -142,11 +138,7 @@ const REGION_IMAGES: Record<string, string[]> = {
         'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80', // Ocean
     ],
     'NORTH': [
-        'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&q=80', // Taj Mahal
-        'https://images.unsplash.com/photo-1587474265402-9e6b7d584844?w=800&q=80', // India Gate
-        'https://images.unsplash.com/photo-1596396825227-817882209772?w=800&q=80', // Red Fort
-        'https://images.unsplash.com/photo-1548013146-72479768bada?w=800&q=80', // Taj River
-        'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80', // India Gate Sunset
+        '/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/del%203.jpg', '/images/catalog/del%204.jpg', '/images/catalog/del%205.jpg',
     ],
     // International & New Categories
     'DUBAI': [

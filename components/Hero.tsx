@@ -36,7 +36,7 @@ export default function Hero() {
                     
                     <div className="relative w-full md:w-1/2 aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl">
                         <img 
-                            src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1200&q=80" 
+                            src="/images/travel.jpg" 
                             alt="Premium Travel" 
                             className="object-cover w-full h-full"
                         />

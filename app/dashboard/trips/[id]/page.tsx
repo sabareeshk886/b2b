@@ -1,180 +1,121 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
+import { 
+    Check, 
+    Info, 
+    Utensils, 
+    Hotel, 
+    FileText, 
+    Download, 
+    Send, 
+    Users, 
+    Calculator,
+    ChevronRight,
+    MapPin,
+    Calendar,
+    Clock,
+} from 'lucide-react';
+import { db } from '@/db';
+import { trips, itineraryDays, tripItems, tripPricing } from '@/db/schema';
+import { eq, asc } from 'drizzle-orm';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Calendar, Users, Star, Check, Download, Send, Info, Clock, Utensils, Hotel, Calculator, FileText, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
 
-
-type PricingTier = {
-    id: string;
-    minPax: number;
-    maxPax: number | null;
-    pricePerPerson: string;
-    currency: string;
-};
-
-type Trip = {
-    id: string;
-    code: string;
-    title: string;
-    region: string;
-    destination?: string;
-    durationDays: number;
-    durationNights: number;
-    basePrice: string;
-    pdfUrl?: string | null;
-    imageUrl?: string | null;
-    overview?: string;
-    highlights?: string[];
-    itineraryDays?: any[];
-    tripItems?: any[];
-    tripPricing?: PricingTier[];
-};
-
-export default function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const resolvedParams = use(params);
-    const [trip, setTrip] = useState<Trip | null>(null);
-    const [loading, setLoading] = useState(true);
+export default function TripDetailPage({ params }: { params: any }) {
+    const [trip, setTrip] = useState<any>(null);
     const [activeTab, setActiveTab] = useState('itinerary');
     const [numPax, setNumPax] = useState(2);
     const [yourMargin, setYourMargin] = useState(5000);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchTrip = async () => {
             try {
-                const response = await fetch(`/api/trips/${resolvedParams.id}`);
+                const unwrappedParams = await params;
+                const id = unwrappedParams.id;
+                const response = await fetch(`/api/trips/${id}`);
                 const data = await response.json();
-                if (data.trip) {
-                    setTrip(data.trip);
-                } else {
-                    const listStats = await fetch('/api/trips');
-                    const listData = await listStats.json();
-                    const found = listData.trips.find((t: any) => t.id === resolvedParams.id);
-                    setTrip(found || null);
-                }
+                if (data.trip) setTrip(data.trip);
             } catch (error) {
                 console.error('Error fetching trip:', error);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchTrip();
-    }, [resolvedParams.id]);
+    }, [params]);
 
-    // Find the price per person for a given pax count from tripPricing tiers
-    const getPriceForPax = (pricingTiers: PricingTier[] | undefined, pax: number): number => {
-        if (!pricingTiers || pricingTiers.length === 0) return 0;
-        // Sort by minPax
-        const sorted = [...pricingTiers].sort((a, b) => a.minPax - b.minPax);
-        // Find matching tier: minPax <= pax <= maxPax (or maxPax is null = unlimited)
-        const match = sorted.find(tier =>
-            pax >= tier.minPax && (tier.maxPax === null || pax <= tier.maxPax)
-        );
-        if (match) return parseFloat(match.pricePerPerson);
-        // Fallback: use last tier (highest pax group)
-        return parseFloat(sorted[sorted.length - 1].pricePerPerson);
-    };
+    if (loading) return <div className="p-8 text-center">Loading trip details...</div>;
+    if (!trip) return <div className="p-8 text-center text-red-500">Trip not found</div>;
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#222222]"></div>
-            </div>
-        );
-    }
-
-    if (!trip) {
-        return (
-            <div className="text-center py-20 bg-white min-h-screen">
-                <h1 className="text-2xl font-bold text-[#222222]">Trip not found</h1>
-                <Link href="/dashboard/trips" className="text-[#006A4E] font-bold hover:underline mt-4 inline-block">
-                    ← Back to Catalog
-                </Link>
-            </div>
-        );
-    }
-
-    // Use tripPricing tiers if available, fall back to basePrice
-    const hasPricingTiers = trip.tripPricing && trip.tripPricing.length > 0;
-    const pricePerPersonFromTier = hasPricingTiers ? getPriceForPax(trip.tripPricing, numPax) : 0;
-    const basePrice = hasPricingTiers ? pricePerPersonFromTier : (parseFloat(trip.basePrice) || 0);
-    const isPriceAvailable = basePrice > 0;
-    const totalB2BPrice = basePrice * numPax;
+    const basePrice = trip.tripPricing?.find((t: any) => numPax >= t.minPax && (t.maxPax === null || numPax <= t.maxPax))?.pricePerPerson || 0;
+    const ppp = parseFloat(basePrice);
+    const isPriceAvailable = ppp > 0;
+    const totalB2BPrice = ppp * numPax;
     const clientPrice = totalB2BPrice + yourMargin;
-    const marginPercentage = totalB2BPrice > 0 ? ((yourMargin / totalB2BPrice) * 100).toFixed(1) : '0.0';
+    const marginPercentage = totalB2BPrice > 0 ? Math.round((yourMargin / totalB2BPrice) * 100) : 0;
 
-    const hasRealItinerary = (trip.itineraryDays || []).length > 0;
-    const displayItinerary = hasRealItinerary ? trip.itineraryDays! : [];
+    const inclusions = trip.tripItems?.filter((i: any) => i.type === 'inclusion').map((i: any) => i.content) || [];
+    const exclusions = trip.tripItems?.filter((i: any) => i.type === 'exclusion').map((i: any) => i.content) || [];
 
-    const inclusions = trip.tripItems?.filter((i: any) => i.type === 'inclusion').map((i: any) => i.item) || ['Premium Accommodation', 'Daily Buffet Breakfast', 'All Transfers in Private AC Vehicle', 'Site Entries & Local Guides'];
-    const exclusions = trip.tripItems?.filter((i: any) => i.type === 'exclusion').map((i: any) => i.item) || ['Airfare/Trains', 'Personal Expenses', 'GST 5%', 'TCS as applicable'];
+    const hasPricingTiers = trip.tripPricing && trip.tripPricing.length > 0;
+    const hasRealItinerary = trip.itineraryDays && trip.itineraryDays.length > 0;
 
-    const getHeroImage = () => {
-        if (trip.imageUrl && !trip.imageUrl.includes('unsplash.com/photo-1469854523086')) return trip.imageUrl;
-        return 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80';
-    };
+    // Use seeded itinerary or fallback
+    const displayItinerary = hasRealItinerary ? trip.itineraryDays : [];
+
+    const tabs = ['itinerary', 'overview', 'inclusions', 'brochure'];
 
     return (
-        <div className="min-h-screen bg-white pb-20">
-            <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-                {/* Clean Navigation */}
-                <Link
-                    href="/dashboard/trips"
-                    className="inline-flex items-center space-x-2 text-[#717171] hover:text-[#222222] mb-8 font-bold text-sm transition-colors uppercase tracking-wider"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back to Catalog</span>
-                </Link>
+        <div className="max-w-7xl mx-auto space-y-8 pb-20">
+            {/* Header / Breadcrumb */}
+            <div className="flex items-center space-x-2 text-sm font-bold text-[#717171] uppercase tracking-widest">
+                <Link href="/dashboard/trips" className="hover:text-[#222222] transition-colors">Catalog</Link>
+                <ChevronRight className="w-4 h-4" />
+                <span className="text-[#222222]">{trip.code}</span>
+            </div>
 
-                <div className="grid lg:grid-cols-3 gap-12">
-                    {/* Left Column: Content */}
-                    <div className="lg:col-span-2 space-y-12">
-                        {/* Header & Hero */}
-                        <div className="space-y-6">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="bg-gray-100 text-[#222222] px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border border-gray-200">
-                                    {trip.code}
-                                </span>
-                                <span className="bg-[#006A4E]/10 text-[#006A4E] px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border border-[#006A4E]/20">
-                                    Agent Exclusive
-                                </span>
+            <div className="grid lg:grid-cols-3 gap-12">
+                {/* Left Column: Content */}
+                <div className="lg:col-span-2 space-y-10">
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h1 className="text-4xl font-black text-[#222222] tracking-tighter">{trip.title}</h1>
+                            <span className="px-4 py-1.5 bg-[#222222] text-white text-[10px] font-black rounded-full uppercase tracking-widest">
+                                {trip.category || 'Premium'}
+                            </span>
+                        </div>
+                        <div className="flex items-center space-x-6 text-[#717171] font-bold text-sm">
+                            <div className="flex items-center space-x-2">
+                                <MapPin className="w-4 h-4" />
+                                <span>{trip.region}</span>
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-extrabold text-[#222222] leading-tight">{trip.title}</h1>
-                            
-                            <div className="flex flex-wrap items-center gap-8 text-[#717171] font-bold text-sm uppercase tracking-wide">
-                                <div className="flex items-center space-x-2">
-                                    <MapPin className="w-4 h-4 text-[#006A4E]" />
-                                    <span>{trip.region}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Calendar className="w-4 h-4 text-[#006A4E]" />
-                                    <span>{trip.durationDays} Days / {trip.durationNights} Nights</span>
-                                </div>
-                            </div>
-
-                            <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-airbnb group">
-                                <Image
-                                    src={getHeroImage()}
-                                    alt={trip.title}
-                                    fill
-                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
+                            <div className="flex items-center space-x-2">
+                                <Clock className="w-4 h-4" />
+                                <span>{trip.duration} Days</span>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Airbnb Style Tabs */}
-                        <div className="border-b border-[#EBEBEB] sticky top-0 bg-white z-20 pt-4">
-                            <div className="flex space-x-8">
-                                {['itinerary', 'overview', 'inclusions', 'brochure'].map((tab) => (
+                    {/* Main Banner Image */}
+                    <div className="relative aspect-[16/7] rounded-3xl overflow-hidden border border-[#EBEBEB] group shadow-xl">
+                        <img 
+                            src={trip.imageUrl || 'https://images.unsplash.com/photo-1501785888041-af3ef285b470'} 
+                            alt={trip.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                    </div>
+
+                    {/* Tabs Navigation */}
+                    <div className="space-y-8">
+                        <div className="border-b border-[#EBEBEB]">
+                            <div className="flex space-x-12">
+                                {tabs.map((tab) => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`pb-4 text-sm font-bold uppercase tracking-widest transition-all relative ${
-                                            activeTab === tab
-                                                ? 'text-[#222222]'
-                                                : 'text-[#717171] hover:text-[#222222]'
+                                        className={`pb-4 text-xs font-black uppercase tracking-[0.2em] relative transition-colors ${
+                                            activeTab === tab ? 'text-[#222222]' : 'text-[#717171] hover:text-[#222222]'
                                         }`}
                                     >
                                         {tab}
@@ -189,16 +130,36 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
                         {/* Tab Content */}
                         <div className="min-h-[400px]">
                             {activeTab === 'brochure' && (
-                                <div className="rounded-3xl border border-[#EBEBEB] overflow-hidden bg-gray-50 h-[800px]">
-                                    {trip.pdfUrl ? (
-                                        <iframe src={trip.pdfUrl} className="w-full h-full" title="Brochure" />
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-full p-12 text-center">
-                                            <FileText className="w-16 h-16 text-gray-200 mb-4" />
-                                            <h3 className="text-xl font-bold text-[#222222]">Digital Brochure Not Available</h3>
-                                            <p className="text-[#717171] font-medium max-w-xs mx-auto">Please contact our team for the latest offline itinerary PDF.</p>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 border border-[#EBEBEB] rounded-2xl">
+                                        <div className="flex items-center space-x-3">
+                                            <FileText className="w-5 h-5 text-[#222222]" />
+                                            <span className="text-sm font-bold text-[#222222]">Digital Itinerary Brochure</span>
                                         </div>
-                                    )}
+                                        {trip.pdfUrl && (
+                                            <a 
+                                                href={trip.pdfUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                download
+                                                className="flex items-center space-x-2 px-4 py-2 bg-[#222222] text-white text-xs font-black rounded-lg uppercase tracking-widest hover:bg-black transition-all"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                                <span>Download Now</span>
+                                            </a>
+                                        )}
+                                    </div>
+                                    <div className="rounded-3xl border border-[#EBEBEB] overflow-hidden bg-gray-50 h-[800px]">
+                                        {trip.pdfUrl ? (
+                                            <iframe src={trip.pdfUrl} className="w-full h-full" title="Brochure" />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full p-12 text-center">
+                                                <FileText className="w-16 h-16 text-gray-200 mb-4" />
+                                                <h3 className="text-xl font-bold text-[#222222]">Digital Brochure Not Available</h3>
+                                                <p className="text-[#717171] font-medium max-w-xs mx-auto">Please contact our team for the latest offline itinerary PDF.</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -332,7 +293,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
                                 {isPriceAvailable ? (
                                     <div className="space-y-2">
                                         <div className="flex items-baseline space-x-2">
-                                            <span className="text-4xl font-black text-[#222222]">₹{basePrice.toLocaleString()}</span>
+                                            <span className="text-4xl font-black text-[#222222]">₹{ppp.toLocaleString()}</span>
                                             <span className="text-sm font-bold text-[#717171]">/ person</span>
                                         </div>
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -363,17 +324,16 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
                                         </thead>
                                         <tbody>
                                             {[...trip.tripPricing].sort((a, b) => a.minPax - b.minPax).map((tier, idx) => {
-                                                const midPax = tier.maxPax ? Math.ceil((tier.minPax + tier.maxPax) / 2) : tier.minPax;
                                                 const isActive = numPax >= tier.minPax && (tier.maxPax === null || numPax <= tier.maxPax);
-                                                const ppp = parseFloat(tier.pricePerPerson);
+                                                const pricePerPerson = parseFloat(tier.pricePerPerson);
                                                 return (
                                                     <tr key={idx} className={`border-b border-[#EBEBEB] last:border-0 transition-colors ${isActive ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
                                                         <td className="px-4 py-2.5 font-bold text-[#222222]">
                                                             {tier.maxPax ? `${tier.minPax}–${tier.maxPax}` : `${tier.minPax}+`}
                                                             {isActive && <span className="ml-1.5 text-[9px] text-[#006A4E] font-black uppercase">✓ Active</span>}
                                                         </td>
-                                                        <td className="px-4 py-2.5 text-right font-black text-[#222222]">₹{ppp.toLocaleString()}</td>
-                                                        <td className="px-4 py-2.5 text-right font-bold text-[#717171]">₹{(ppp * numPax).toLocaleString()}</td>
+                                                        <td className="px-4 py-2.5 text-right font-black text-[#222222]">₹{pricePerPerson.toLocaleString()}</td>
+                                                        <td className="px-4 py-2.5 text-right font-bold text-[#717171]">₹{(pricePerPerson * tier.minPax).toLocaleString()}</td>
                                                     </tr>
                                                 );
                                             })}
@@ -453,4 +413,3 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
         </div>
     );
 }
-

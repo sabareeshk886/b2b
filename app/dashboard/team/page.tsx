@@ -1,39 +1,27 @@
+'use client';
+
 import { Users, Mail, Phone, Shield, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function TeamPage() {
+    const [adminName, setAdminName] = useState('Demo User');
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('userName');
+        if (storedUser) {
+            setAdminName(storedUser);
+        }
+    }, []);
+
     const teamMembers = [
         {
-            name: 'Demo User',
-            email: 'admin@gmail.com',
+            name: adminName,
+            email: adminName.includes('@') ? adminName : 'admin@company.com',
             phone: '+91 98765 43210',
             role: 'Admin',
             status: 'active',
-            avatar: 'D',
-        },
-        {
-            name: 'Sarah Johnson',
-            email: 'sarah@company.com',
-            phone: '+91 98765 43211',
-            role: 'Manager',
-            status: 'active',
-            avatar: 'S',
-        },
-        {
-            name: 'Mike Chen',
-            email: 'mike@company.com',
-            phone: '+91 98765 43212',
-            role: 'Agent',
-            status: 'active',
-            avatar: 'M',
-        },
-        {
-            name: 'Priya Sharma',
-            email: 'priya@company.com',
-            phone: '+91 98765 43213',
-            role: 'Agent',
-            status: 'active',
-            avatar: 'P',
-        },
+            avatar: adminName.charAt(0).toUpperCase(),
+        }
     ];
 
     return (
@@ -52,10 +40,10 @@ export default function TeamPage() {
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                    { label: 'Total Members', value: '4', color: 'text-blue-600 bg-blue-50' },
+                    { label: 'Total Members', value: '1', color: 'text-blue-600 bg-blue-50' },
                     { label: 'Admins', value: '1', color: 'text-[#006A4E] bg-emerald-50' },
-                    { label: 'Managers', value: '1', color: 'text-orange-600 bg-orange-50' },
-                    { label: 'Agents', value: '2', color: 'text-purple-600 bg-purple-50' },
+                    { label: 'Managers', value: '0', color: 'text-orange-600 bg-orange-50' },
+                    { label: 'Agents', value: '0', color: 'text-purple-600 bg-purple-50' },
                 ].map((stat, idx) => (
                     <div key={idx} className="bg-white border border-[#EBEBEB] p-6 rounded-2xl hover:shadow-airbnb transition-all cursor-pointer group">
                         <div className={`w-12 h-12 rounded-xl ${stat.color} flex items-center justify-center mb-4`}>

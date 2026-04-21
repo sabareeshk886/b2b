@@ -1,42 +1,44 @@
+'use client';
+
 import { TrendingUp, Package, FileText, Users, ArrowUpRight } from 'lucide-react';
 
 export default function DashboardPage() {
     const stats = [
         {
             label: 'Total Quotes',
-            value: '24',
-            change: '+12%',
+            value: '0',
+            change: '0%',
             icon: FileText,
             color: 'text-blue-500 bg-blue-50',
         },
         {
             label: 'Active Bookings',
-            value: '18',
-            change: '+8%',
+            value: '0',
+            change: '0%',
             icon: Package,
             color: 'text-[#006A4E] bg-emerald-50',
         },
         {
             label: 'Revenue (Monthly)',
-            value: '₹4.2L',
-            change: '+23%',
+            value: '₹0',
+            change: '0%',
             icon: TrendingUp,
             color: 'text-orange-500 bg-orange-50',
         },
         {
             label: 'Team Members',
-            value: '5',
-            change: '+2',
+            value: '1',
+            change: '0',
             icon: Users,
             color: 'text-purple-500 bg-purple-50',
         },
     ];
 
-    const recentQuotes = [
-        { id: 'Q-001', customer: 'Rajesh Kumar', destination: 'Bali Paradise', amount: '₹45,000', status: 'confirmed' },
-        { id: 'Q-002', customer: 'Priya Sharma', destination: 'Dubai Extravaganza', amount: '₹55,000', status: 'pending' },
-        { id: 'Q-003', customer: 'Amit Patel', destination: 'Maldives Luxury', amount: '₹85,000', status: 'sent' },
-    ];
+    const recentQuotes: any[] = [];
+
+    const handleUpgrade = () => {
+        alert("Upgrade feature is coming soon! For now, enjoy your Premium B2B benefits.");
+    };
 
     return (
         <div className="space-y-8">
@@ -74,29 +76,39 @@ export default function DashboardPage() {
                     </div>
                     
                     <div className="divide-y divide-[#EBEBEB]">
-                        {recentQuotes.map((quote, idx) => (
-                            <div key={idx} className="py-4 first:pt-0 last:pb-0 flex items-center justify-between hover:bg-gray-50/50 transition-colors rounded-lg px-2 -mx-2 cursor-pointer group">
-                                <div className="flex items-center space-x-4">
-                                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#222222] font-bold text-xs group-hover:bg-white transition-colors">
-                                        {quote.customer.charAt(0)}
+                        {recentQuotes.length > 0 ? (
+                            recentQuotes.map((quote, idx) => (
+                                <div key={idx} className="py-4 first:pt-0 last:pb-0 flex items-center justify-between hover:bg-gray-50/50 transition-colors rounded-lg px-2 -mx-2 cursor-pointer group">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#222222] font-bold text-xs group-hover:bg-white transition-colors">
+                                            {quote.customer.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-[#222222]">{quote.customer}</p>
+                                            <p className="text-xs text-[#717171] font-medium">{quote.destination} • {quote.id}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-[#222222]">{quote.customer}</p>
-                                        <p className="text-xs text-[#717171] font-medium">{quote.destination} • {quote.id}</p>
+                                    <div className="text-right">
+                                        <p className="font-bold text-[#222222]">{quote.amount}</p>
+                                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mt-1 ${
+                                            quote.status === 'confirmed' ? 'bg-emerald-50 text-[#006A4E]' :
+                                            quote.status === 'sent' ? 'bg-blue-50 text-blue-600' :
+                                            'bg-orange-50 text-orange-600'
+                                        }`}>
+                                            {quote.status}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-[#222222]">{quote.amount}</p>
-                                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mt-1 ${
-                                        quote.status === 'confirmed' ? 'bg-emerald-50 text-[#006A4E]' :
-                                        quote.status === 'sent' ? 'bg-blue-50 text-blue-600' :
-                                        'bg-orange-50 text-orange-600'
-                                    }`}>
-                                        {quote.status}
-                                    </span>
-                                </div>
+                            ))
+                        ) : (
+                            <div className="py-8 text-center">
+                                <FileText className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm font-medium text-gray-500">No quotes generated yet.</p>
+                                <a href="/dashboard/trips" className="inline-block mt-4 text-sm font-bold text-[#006A4E] hover:underline">
+                                    Create your first quote
+                                </a>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
 
@@ -107,7 +119,10 @@ export default function DashboardPage() {
                             <p className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-2">Premium Partner</p>
                             <h3 className="text-3xl font-bold mb-4">25% OFF <br />Every Trip.</h3>
                             <p className="text-sm text-gray-300 font-medium mb-6">You're currently on the Premium B2B tier. Enjoy our lowest wholesale rates.</p>
-                            <button className="w-full bg-white text-[#222222] py-3.5 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors">
+                            <button 
+                                onClick={handleUpgrade}
+                                className="w-full bg-white text-[#222222] py-3.5 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors"
+                            >
                                 Upgrade Account
                             </button>
                         </div>
@@ -137,4 +152,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-

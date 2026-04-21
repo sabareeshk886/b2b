@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Globe, Mail, Lock, Building2, Phone, MapPin, FileText, ArrowRight, Eye, EyeOff, User } from 'lucide-react';
+import { registerCompany } from '../actions/auth';
 
 export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [step, setStep] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
     const [formData, setFormData] = useState({
         companyName: '',
         companyEmail: '',
@@ -15,7 +18,6 @@ export default function RegisterPage() {
         licenseNumber: '',
         gstNumber: '',
         userName: '',
-        userEmail: '',
         password: '',
         confirmPassword: '',
     });
@@ -26,7 +28,32 @@ export default function RegisterPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Register:', formData);
+        setIsLoading(true);
+        setErrorMsg('');
+
+        if (formData.password !== formData.confirmPassword) {
+            setErrorMsg('Passwords do not match');
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const res = await registerCompany(formData);
+            if (res.error) {
+                setErrorMsg(res.error);
+                setIsLoading(false);
+                return;
+            }
+            
+            // Set localStorage for client demo compatibility
+            localStorage.setItem('companyName', formData.companyName || 'My Travel Company');
+            localStorage.setItem('userName', formData.userName || 'Admin User');
+            
+            window.location.href = '/dashboard';
+        } catch (err: any) {
+            setErrorMsg('Failed to register');
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -69,6 +96,12 @@ export default function RegisterPage() {
                     <p className="text-gray-600 mb-8">
                         {step === 1 ? 'Tell us about your travel company' : 'Setup your admin account'}
                     </p>
+
+                    {errorMsg && (
+                        <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium">
+                            {errorMsg}
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit}>
                         {step === 1 ? (
@@ -214,23 +247,7 @@ export default function RegisterPage() {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Email Address *
-                                        </label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                            <input
-                                                type="email"
-                                                name="userEmail"
-                                                value={formData.userEmail}
-                                                onChange={handleChange}
-                                                className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                                placeholder="john@company.com"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
+
 
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -294,10 +311,11 @@ export default function RegisterPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-1 gradient-primary text-white py-3.5 rounded-xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center"
+                                        disabled={isLoading}
+                                        className="flex-1 gradient-primary text-white py-3.5 rounded-xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        Create Account
-                                        <ArrowRight className="ml-2 w-5 h-5" />
+                                        {isLoading ? 'Creating...' : 'Create Account'}
+                                        {!isLoading && <ArrowRight className="ml-2 w-5 h-5" />}
                                     </button>
                                 </div>
                             </>

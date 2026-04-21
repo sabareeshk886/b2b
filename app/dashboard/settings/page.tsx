@@ -1,6 +1,19 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Building2, User, Bell, Lock, CreditCard, Globe } from 'lucide-react';
 
 export default function SettingsPage() {
+    const [companyName, setCompanyName] = useState('Wanderlust Travels');
+    const [companyEmail, setCompanyEmail] = useState('admin@gmail.com');
+
+    useEffect(() => {
+        const storedCompany = localStorage.getItem('companyName');
+        const storedEmail = localStorage.getItem('companyEmail');
+        if (storedCompany) setCompanyName(storedCompany);
+        if (storedEmail) setCompanyEmail(storedEmail);
+    }, []);
+
     return (
         <div className="space-y-10">
             <div>
@@ -27,7 +40,8 @@ export default function SettingsPage() {
                                 <label className="block text-sm font-bold text-[#222222] mb-2 uppercase tracking-tight">Agency Name</label>
                                 <input
                                     type="text"
-                                    defaultValue="Wanderlust Travels"
+                                    value={companyName}
+                                    onChange={(e) => setCompanyName(e.target.value)}
                                     className="w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#222222] transition-colors font-medium text-[#222222]"
                                 />
                             </div>
@@ -35,7 +49,8 @@ export default function SettingsPage() {
                                 <label className="block text-sm font-bold text-[#222222] mb-2 uppercase tracking-tight">Email Address</label>
                                 <input
                                     type="email"
-                                    defaultValue="admin@gmail.com"
+                                    value={companyEmail}
+                                    onChange={(e) => setCompanyEmail(e.target.value)}
                                     className="w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#222222] transition-colors font-medium text-[#222222]"
                                 />
                             </div>

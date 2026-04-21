@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
                 tripPricing: true,
             },
         });
-
+        
         return NextResponse.json({ trips: allTrips });
     } catch (error: any) {
         console.error('Error fetching trips:', error);

@@ -1,23 +1,22 @@
 import 'dotenv/config';
 import postgres from 'postgres';
-import fs from 'fs';
 
-const poolerUrl = process.env.DATABASE_URL!;
-
-async function main() {
-    let out = "Testing pooler URL (No SSL)\n";
-    try {
-        const client = postgres(poolerUrl);
-        const result = await client`SELECT 1 as result`;
-        out += 'Success connecting to pooler postgres: ' + JSON.stringify(result) + '\n';
-        
-        const tripsCount = await client`SELECT count(*) FROM trips`;
-        out += 'Trips count: ' + JSON.stringify(tripsCount) + '\n';
-    } catch(e: any) {
-        out += 'Error with pooler URL (No SSL): ' + e.toString() + '\n';
-        if (e.message) out += e.message + '\n';
+async function test() {
+    const url = process.env.DATABASE_URL;
+    console.log('Testing connection to:', url?.replace(/:[^:@]+@/, ':****@'));
+    if (!url) {
+        console.error('DATABASE_URL not found');
+        process.exit(1);
     }
-    fs.writeFileSync('out.txt', out);
-    process.exit(0);
+    const sql = postgres(url, { ssl: 'require' });
+    try {
+        const res = await sql`SELECT 1`;
+        console.log('Connection successful:', res);
+    } catch (err) {
+        console.error('Connection failed:', err);
+    } finally {
+        await sql.end();
+    }
 }
-main();
+
+test();

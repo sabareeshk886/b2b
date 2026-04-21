@@ -1,0 +1,1 @@
+-- itinerary_days from PDFs -- paste into Supabase SQL editor

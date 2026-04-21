@@ -12,14 +12,14 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         console.log('Login:', { email, password });
+        
+        localStorage.setItem('companyName', 'Fernway Default Partner');
+        localStorage.setItem('userName', email || 'Demo User');
+        
         // Redirect to dashboard for demo
         window.location.href = '/dashboard';
     };
 
-    const fillDemoCredentials = () => {
-        setEmail('admin@gmail.com');
-        setPassword('admin');
-    };
 
     return (
         <div className="min-h-screen flex">
@@ -88,13 +88,6 @@ export default function LoginPage() {
                             </Link>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={fillDemoCredentials}
-                            className="w-full border-2 border-emerald-500 text-emerald-600 py-3.5 rounded-xl font-semibold hover:bg-emerald-50 transition-all duration-300 flex items-center justify-center text-lg"
-                        >
-                            Use Demo Credentials
-                        </button>
 
                         <button
                             type="submit"
@@ -104,9 +97,6 @@ export default function LoginPage() {
                             <ArrowRight className="ml-2 w-5 h-5" />
                         </button>
 
-                        <p className="text-xs text-center text-gray-500">
-                            Demo: <span className="font-semibold">admin@gmail.com</span> / <span className="font-semibold">admin</span>
-                        </p>
                     </form>
 
                     <div className="mt-8 text-center">
