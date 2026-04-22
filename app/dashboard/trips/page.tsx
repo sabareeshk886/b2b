@@ -209,7 +209,7 @@ export default function TripsPage() {
 
     const fetchTrips = async () => {
         try {
-            const response = await fetch('/api/trips');
+            const response = await fetch('/api/trips', { cache: 'no-store' });
             const data = await response.json();
             setTrips(data.trips || []);
         } catch (error) {
