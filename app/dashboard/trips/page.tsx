@@ -237,14 +237,15 @@ export default function TripsPage() {
     const getTripImage = (trip: Trip) => {
         if (imgErrors[trip.id]) return getFallbackImage(trip);
         const dbImage = trip.imageUrl;
-        const validDbImage = dbImage && dbImage.startsWith('http') && !dbImage.includes('example.com') && !dbImage.includes('placeholder');
+        const validDbImage = dbImage && dbImage.startsWith('http') && !dbImage.includes('example.com') && !dbImage.includes('placeholder') && !dbImage.includes('unsplash.com');
         if (validDbImage) return dbImage;
         return getFallbackImage(trip);
     };
 
     const getFallbackImage = (trip: Trip) => {
         const seedStr = trip.id || trip.code;
-        const hash = seedStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const hashVal = seedStr.split('').reduce((acc: number, char: string) => (((acc << 5) - acc) + char.charCodeAt(0)) | 0, 0);
+        const hash = Math.abs(hashVal);
         const text = (trip.title + ' ' + trip.region + ' ' + (trip.destinations?.join(' ') || '')).toUpperCase();
         
         let category = 'DEFAULT';
@@ -266,6 +267,8 @@ export default function TripsPage() {
         else if (text.includes('CHENNAI')) category = 'CHENNAI';
         else if (text.includes('AGRA')) category = 'AGRA';
         else if (text.includes('DELHI')) category = 'DELHI';
+        else if (text.includes('NORTH')) category = 'NORTH';
+        else if (text.includes('AGR')) category = 'NORTH';
 
         const pool = REGION_IMAGES[category] || REGION_IMAGES['DEFAULT'];
         return pool[hash % pool.length];

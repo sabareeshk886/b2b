@@ -78,21 +78,7 @@ export default function Navbar() {
                                 >
                                     Sign up
                                 </Link>
-                                <div className="border-t border-gray-100 my-1" />
-                                <Link
-                                    href="/register"
-                                    onClick={() => setMenuOpen(false)}
-                                    className="block px-5 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-                                >
-                                    B2B Partner Program
-                                </Link>
-                                <Link
-                                    href="/dashboard"
-                                    onClick={() => setMenuOpen(false)}
-                                    className="block px-5 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-                                >
-                                    Dashboard
-                                </Link>
+
                             </div>
                         )}
                     </div>

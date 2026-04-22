@@ -1,56 +1,6 @@
-import Navbar from '@/components/Navbar';
-import CategoryBar from '@/components/CategoryBar';
-import Hero from '@/components/Hero';
-import TripCard from '@/components/TripCard';
-import { db } from '@/db';
-import { trips } from '@/db/schema';
-import Link from 'next/link';
-import { ArrowRight, Globe, Percent, Palette, Headset } from 'lucide-react';
+const fs = require('fs');
 
-import { Suspense } from 'react';
-
-// Next.js 15 async searchParams
-export default async function HomePage() {
-    let featuredTrips: any[] = [];
-    
-    try {
-        const rawTrips = await db.select().from(trips);
-        
-        // Exclude unpolished 'NORTH' cards globally so they don't get accidentally added during padding
-        const allTrips = rawTrips.filter((trip) => {
-            const r = trip.region || 'UNKNOWN';
-            return r !== 'NORTH' && !trip.title.includes('AGR DL');
-        });
-        
-        // Ensure distinct regions first
-        const distinctTrips: typeof allTrips = [];
-        const seenRegions = new Set();
-        for (const trip of allTrips) {
-            const r = trip.region || 'UNKNOWN';
-            
-            if (!seenRegions.has(r) && distinctTrips.length < 6) {
-                seenRegions.add(r);
-                distinctTrips.push(trip);
-            }
-        }
-
-        // Fill remaining slots if we have fewer than 6 distinct regions
-        for (const trip of allTrips) {
-            if (distinctTrips.length >= 6) break;
-            if (!distinctTrips.find(t => t.id === trip.id)) {
-                distinctTrips.push(trip);
-            }
-        }
-
-        // Return exactly 6 cards
-        featuredTrips = distinctTrips;
-    } catch (error) {
-        console.error("Database connection times out during prerender:", error);
-    }
-    
-    // Pulling the rich image mapping directly from dashboard source
-    const REGION_IMAGES: Record<string, string[]> = {
-    'MUMBAI': ['/images/catalog/mum%201.jpg', '/images/catalog/mum%202.jpg', '/images/catalog/mum%203.jpg', '/images/catalog/mum%204.jpg', '/images/catalog/mum%205.jpg', '/images/catalog/mum%206.jpg', '/images/catalog/mum%207.jpg'],
+const localPoolsStr = `    'MUMBAI': ['/images/catalog/mum%201.jpg', '/images/catalog/mum%202.jpg', '/images/catalog/mum%203.jpg', '/images/catalog/mum%204.jpg', '/images/catalog/mum%205.jpg', '/images/catalog/mum%206.jpg', '/images/catalog/mum%207.jpg'],
     'MATHERAN': ['/images/catalog/mat%201.jpg', '/images/catalog/mat%203.jpg', '/images/catalog/mat%204.jpg', '/images/catalog/mat%205.jpg', '/images/catalog/mat%206.jpg', '/images/catalog/mat%207.jpg', '/images/catalog/mat%209.jpg', '/images/catalog/mat%2010.jpg', '/images/catalog/mat.jpg'],
     'AGRA': ['/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/del%203.jpg', '/images/catalog/raj%201.jpg', '/images/catalog/raj%202.jpg'],
     'RAJASTHAN': ['/images/catalog/raj%201.jpg', '/images/catalog/raj%202.jpg', '/images/catalog/raj%203.jpg', '/images/catalog/raj%204.jpg', '/images/catalog/raj%206.jpg', '/images/catalog/raj%207.jpg', '/images/catalog/raj%208.jpg', '/images/catalog/raj%2010.jpg'],
@@ -74,62 +24,9 @@ export default async function HomePage() {
     'VIETNAM': ['/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/raj%201.jpg', '/images/catalog/raj%202.jpg', '/images/catalog/mum%201.jpg', '/images/catalog/mum%202.jpg', '/images/catalog/man%201.jpg', '/images/catalog/man%202.jpg'],
     'SINGAPORE': ['/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/raj%201.jpg', '/images/catalog/raj%202.jpg', '/images/catalog/mum%201.jpg', '/images/catalog/mum%202.jpg', '/images/catalog/man%201.jpg', '/images/catalog/man%202.jpg'],
     'DEFAULT': ['/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/raj%201.jpg', '/images/catalog/raj%202.jpg', '/images/catalog/mum%201.jpg', '/images/catalog/mum%202.jpg', '/images/catalog/man%201.jpg', '/images/catalog/man%202.jpg'],
-    };
+`;
 
-    const getTripImage = (trip: any) => {
-        const seedStr = trip.id || trip.code;
-        const hashVal = seedStr.split('').reduce((acc: number, char: string) => (((acc << 5) - acc) + char.charCodeAt(0)) | 0, 0);
-        const hash = Math.abs(hashVal);
-        const text = (trip.title + ' ' + trip.region + ' ' + (trip.destinations?.join(' ') || '')).toUpperCase();
-        
-        let category = 'DEFAULT';
-        if (text.includes('DUBAI')) category = 'DUBAI';
-        else if (text.includes('BALI')) category = 'BALI';
-        else if (text.includes('THAI')) category = 'THAI';
-        else if (text.includes('MALDIVES')) category = 'MALDIVES';
-        else if (text.includes('EUROPE')) category = 'EUROPE';
-        else if (text.includes('MANALI')) category = 'MANALI';
-        else if (text.includes('KASOL')) category = 'KASOL';
-        else if (text.includes('ANDAMAN')) category = 'ANDAMAN';
-        else if (text.includes('GOA')) category = 'GOA';
-        else if (text.includes('KERALA')) category = 'KERALA';
-        else if (text.includes('RAJASTHAN')) category = 'RAJASTHAN';
-        else if (text.includes('PUNJAB')) category = 'PUNJAB';
-        else if (text.includes('CHENNAI')) category = 'CHENNAI';
-        else if (text.includes('MUMBAI')) category = 'MUMBAI';
-        else if (text.includes('MATHERAN')) category = 'MATHERAN';
-        else if (text.includes('SOUTH')) category = 'SOUTH';
-        else if (text.includes('AGRA')) category = 'AGRA';
-        else if (text.includes('DELHI')) category = 'DELHI';
-        else if (text.includes('NORTH')) category = 'NORTH';
-
-        const pool = REGION_IMAGES[category] || REGION_IMAGES['DEFAULT'];
-        return pool[hash % pool.length];
-    };
-
-    return (
-        <div className="min-h-screen bg-white">
-            <Navbar />
-            
-            <main>
-                <Hero />
-                <CategoryBar />
-
-                <section id="trips" className="py-12 px-6 md:px-12">
-                    <div className="container mx-auto">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
-                            {featuredTrips.map((trip) => (
-                                <TripCard 
-                                    key={trip.id} 
-                                    trip={{
-                                        ...trip,
-                                        image: (trip.imageUrl && !trip.imageUrl.includes('unsplash.com')) ? trip.imageUrl : getTripImage(trip)
-                                    }} 
-                                />
-                            ))}
-                        </div>
-                        
-                                                {/* More Button */}
+const premiumButtonStr = `                        {/* More Button */}
                         <div className="mt-20 text-center">
                             <Link href="/login">
                                 <button className="group relative px-8 py-4 font-bold text-white rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,106,78,0.3)] hover:-translate-y-1">
@@ -141,11 +38,9 @@ export default async function HomePage() {
                                     </span>
                                 </button>
                             </Link>
-                        </div>
-                    </div>
-                </section>
-                
-                                {/* Benefits Section - Premium Redesign */}
+                        </div>`;
+
+const premiumSectionStr = `                {/* Benefits Section - Premium Redesign */}
                 <section className="py-24 relative overflow-hidden bg-gradient-to-b from-white to-gray-50/50">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#006A4E] via-transparent to-transparent pointer-events-none"></div>
                     <div className="container mx-auto px-6 md:px-12 relative z-10">
@@ -184,25 +79,48 @@ export default async function HomePage() {
                             </div>
                         </div>
                     </div>
-                </section>
-            </main>
+                </section>`;
 
-            <footer className="py-12 px-6 md:px-12 border-t border-gray-100 bg-white">
-                <div className="container mx-auto">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div className="flex items-center space-x-2 text-[#006A4E]">
-                            <Globe className="w-5 h-5" />
-                            <span className="font-bold">FERNWAY B2B</span>
-                        </div>
-                        <div className="flex items-center space-x-6 text-sm font-light text-[#717171]">
-                            <Link href="#" className="hover:underline">&copy; 2026 Fernway Inc.</Link>
-                            <Link href="#" className="hover:underline">Privacy</Link>
-                            <Link href="#" className="hover:underline">Terms</Link>
-                            <Link href="#" className="hover:underline">Sitemap</Link>
-                        </div>
-                    </div>
-                </div>
-            </footer>
-        </div>
-    );
+try {
+    let p = fs.readFileSync('app/page.tsx', 'utf-8');
+    
+    // 1. Imports
+    p = p.replace(/import \{ ArrowRight, Globe \} from 'lucide-react';/, "import { ArrowRight, Globe, Percent, Palette, Headset } from 'lucide-react';");
+    
+    // 2. REGION_IMAGES array. Be extremely specific.
+    const regionSectionStart = p.indexOf('const REGION_IMAGES: Record<string, string[]> = {');
+    const regionSectionEnd = p.indexOf('    };', regionSectionStart);
+    if (regionSectionStart > -1 && regionSectionEnd > -1) {
+        p = p.substring(0, regionSectionStart) + "const REGION_IMAGES: Record<string, string[]> = {\n" + localPoolsStr + "    };" + p.substring(regionSectionEnd + 6);
+    }
+
+    // 3. DJB2 hashing
+    p = p.replace(/const hash = seedStr\.split\(''\)\.reduce\(\(acc: number, char: string\) => acc \+ char\.charCodeAt\(0\), 0\);/g, "const hashVal = seedStr.split('').reduce((acc: number, char: string) => (((acc << 5) - acc) + char.charCodeAt(0)) | 0, 0);\n        const hash = Math.abs(hashVal);");
+    
+    // 4. North / Agr region
+    if (!p.includes("else if (text.includes('NORTH')) category = 'NORTH';")) {
+       p = p.replace(/else if \(text\.includes\('DELHI'\)\) category = 'DELHI';/, "else if (text.includes('DELHI')) category = 'DELHI';\n        else if (text.includes('NORTH')) category = 'NORTH';\n        else if (text.includes('AGR')) category = 'NORTH';");
+    }
+
+    // 5. Unsplash imageUrl exclusion
+    p = p.replace(/image: trip.imageUrl \|\| getTripImage\(trip\)/g, "image: (trip.imageUrl && !trip.imageUrl.includes('unsplash.com')) ? trip.imageUrl : getTripImage(trip)");
+
+    // 6. Premium Redesign buttons
+    const btnStart = p.indexOf('{/* More Button like Airbnb "Show more" */}');
+    const btnEnd = p.indexOf('</section>', btnStart);
+    if (btnStart > -1 && btnEnd > -1) {
+       p = p.substring(0, btnStart) + premiumButtonStr + "\n                    </div>\n                </section>" + p.substring(btnEnd + 10);
+    }
+
+    // 7. Premium Redesign section
+    const secStart = p.indexOf('{/* Benefits Section - Airbnb style (Minimal) */}');
+    const secEnd = p.indexOf('</section>', secStart);
+    if (secStart > -1 && secEnd > -1) {
+       p = p.substring(0, secStart) + premiumSectionStr + p.substring(secEnd + 10);
+    }
+    
+    fs.writeFileSync('app/page.tsx', p);
+    console.log("Success");
+} catch(e) {
+    console.error(e);
 }

@@ -1,4 +1,5 @@
 import { FileText, Users, DollarSign, Clock, Eye, Download, Send } from 'lucide-react';
+import Link from 'next/link';
 
 export default function QuotesPage() {
     const quotes: any[] = [];
@@ -10,9 +11,11 @@ export default function QuotesPage() {
                     <h1 className="text-3xl font-bold text-[#222222] mb-1">My Quotes</h1>
                     <p className="text-[#717171] font-medium">Create and manage customized B2B quotes</p>
                 </div>
-                <button className="px-8 py-3.5 bg-[#222222] text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95">
-                    + Create New Quote
-                </button>
+                <Link href="/dashboard/trips">
+                    <button className="px-8 py-3.5 bg-[#222222] text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95">
+                        + Create New Quote
+                    </button>
+                </Link>
             </div>
 
             {/* Stats */}
@@ -83,9 +86,11 @@ export default function QuotesPage() {
                             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                             <h3 className="text-lg font-bold text-[#222222] mb-1">No Quotes Found</h3>
                             <p className="text-sm font-medium text-gray-500 mb-6 max-w-sm mx-auto">You haven't generated any quotes yet. Click "Create New Quote" to get started.</p>
-                            <button className="px-6 py-2.5 bg-[#006A4E] text-white rounded-xl font-bold hover:bg-[#005a42] transition-all text-sm">
-                                Create New Quote
-                            </button>
+                            <Link href="/dashboard/trips">
+                                <button className="px-6 py-2.5 bg-[#006A4E] text-white rounded-xl font-bold hover:bg-[#005a42] transition-all text-sm">
+                                    Create New Quote
+                                </button>
+                            </Link>
                         </div>
                     )}
                 </div>

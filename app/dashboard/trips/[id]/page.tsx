@@ -29,6 +29,18 @@ export default function TripDetailPage({ params }: { params: any }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (trip?.tripPricing?.length > 0) {
+            const minAllowed = Math.min(...trip.tripPricing.map((t: any) => t.minPax));
+            setNumPax(prev => (prev < minAllowed && prev === 2) ? minAllowed : prev);
+        }
+    }, [trip]);
+
+    const generatedPaxOptions = Array.from(new Set([
+        1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20,
+        ...(trip?.tripPricing?.map((p: any) => p.minPax) || [])
+    ])).sort((a, b) => a - b);
+
+    useEffect(() => {
         const fetchTrip = async () => {
             try {
                 const unwrappedParams = await params;
@@ -52,8 +64,8 @@ export default function TripDetailPage({ params }: { params: any }) {
     const ppp = parseFloat(basePrice);
     const isPriceAvailable = ppp > 0;
     const totalB2BPrice = ppp * numPax;
-    const clientPrice = totalB2BPrice + yourMargin;
-    const marginPercentage = totalB2BPrice > 0 ? Math.round((yourMargin / totalB2BPrice) * 100) : 0;
+    const clientPrice = (ppp + yourMargin) * numPax;
+    const marginPercentage = ppp > 0 ? Math.round((yourMargin / ppp) * 100) : 0;
 
     const inclusions = trip.tripItems?.filter((i: any) => i.type === 'inclusion').map((i: any) => i.content) || [];
     const exclusions = trip.tripItems?.filter((i: any) => i.type === 'exclusion').map((i: any) => i.content) || [];
@@ -63,6 +75,23 @@ export default function TripDetailPage({ params }: { params: any }) {
 
     // Use seeded itinerary or fallback
     const displayItinerary = hasRealItinerary ? trip.itineraryDays : [];
+
+    const handleShareQuote = async () => {
+        const companyName = typeof window !== 'undefined' ? localStorage.getItem('companyName') || 'your travel partner' : 'your travel partner';
+        const tripTheme = trip.category || trip.region || 'Premium';
+        const tripDuration = trip.durationDays ? `${trip.durationDays} Days / ${trip.durationNights || trip.durationDays - 1} Nights` : 'Custom';
+        const brochureLink = trip.pdfUrl ? (trip.pdfUrl.startsWith('http') ? trip.pdfUrl : `${window.location.origin}${trip.pdfUrl.startsWith('/') ? '' : '/'}${trip.pdfUrl}`) : '';
+        
+        const text = `Hello,\n\nHere is the itinerary quote for your upcoming trip.\n\nItinerary: ${trip.title}\nTheme: ${tripTheme}\nDuration: ${tripDuration}\nPassengers: ${numPax}\n\nPrice Per Person: ₹${Math.round(clientPrice/numPax).toLocaleString()}${brochureLink ? `\n\nBrochure: ${brochureLink}` : ''}\n\nRegards,\n${companyName}`;
+        
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (err) {
+            console.error('Failed to copy text', err);
+        }
+        
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    };
 
     const tabs = ['itinerary', 'overview', 'inclusions', 'brochure'];
 
@@ -82,7 +111,7 @@ export default function TripDetailPage({ params }: { params: any }) {
                         <div className="flex items-center justify-between mb-4">
                             <h1 className="text-4xl font-black text-[#222222] tracking-tighter">{trip.title}</h1>
                             <span className="px-4 py-1.5 bg-[#222222] text-white text-[10px] font-black rounded-full uppercase tracking-widest">
-                                {trip.category || 'Premium'}
+                                {trip.category || trip.region || 'Premium'}
                             </span>
                         </div>
                         <div className="flex items-center space-x-6 text-[#717171] font-bold text-sm">
@@ -92,7 +121,7 @@ export default function TripDetailPage({ params }: { params: any }) {
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Clock className="w-4 h-4" />
-                                <span>{trip.duration} Days</span>
+                                <span>{trip.durationDays || trip.duration} Days</span>
                             </div>
                         </div>
                     </div>
@@ -100,7 +129,7 @@ export default function TripDetailPage({ params }: { params: any }) {
                     {/* Main Banner Image */}
                     <div className="relative aspect-[16/7] rounded-3xl overflow-hidden border border-[#EBEBEB] group shadow-xl">
                         <img 
-                            src={trip.imageUrl || 'https://images.unsplash.com/photo-1501785888041-af3ef285b470'} 
+                            src={trip.imageUrl || '/images/catalog/del%201.jpg'} 
                             alt={trip.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
@@ -356,12 +385,12 @@ export default function TripDetailPage({ params }: { params: any }) {
                                             onChange={(e) => setNumPax(Number(e.target.value))}
                                             className="w-full bg-white border border-[#EBEBEB] px-4 py-3 rounded-xl font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
                                         >
-                                            {[1,2,3,4,5,6,8,10,12,15,20].map(n => <option key={n} value={n}>{n} Pax</option>)}
+                                            {generatedPaxOptions.map((n: number) => <option key={n} value={n}>{n} Pax</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Your Markup (₹)</label>
+                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Your Markup (per pax) (₹)</label>
                                             <span className="text-[10px] font-black text-[#006A4E]">{marginPercentage}%</span>
                                         </div>
                                         <input 
@@ -374,25 +403,28 @@ export default function TripDetailPage({ params }: { params: any }) {
                                 </div>
                                 <div className="pt-4 border-t border-gray-200 space-y-1">
                                     {isPriceAvailable && (
-                                        <div className="flex justify-between text-xs font-bold text-[#717171]">
-                                            <span>Net B2B ({numPax} pax)</span>
-                                            <span>₹{totalB2BPrice.toLocaleString()}</span>
+                                        <div className="flex justify-between text-xs font-bold text-[#717171] mb-2">
+                                            <span>Net B2B (per pax)</span>
+                                            <span>₹{ppp.toLocaleString()}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-baseline">
                                         <p className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Final Client Price</p>
-                                        <p className="text-2xl font-black text-[#222222]">₹{isPriceAvailable ? clientPrice.toLocaleString() : yourMargin.toLocaleString()}</p>
-                                    </div>
-                                    {isPriceAvailable && numPax > 1 && (
-                                        <p className="text-[10px] text-[#717171] font-bold text-right">
-                                            ₹{Math.round(clientPrice / numPax).toLocaleString()} / person
+                                        <p className="text-2xl font-black text-[#222222]">
+                                            {isPriceAvailable 
+                                                ? `₹${Math.round(clientPrice / numPax).toLocaleString()}` 
+                                                : `Base + ₹${Math.round(yourMargin / numPax).toLocaleString()}`}
+                                            <span className="text-sm font-bold text-[#717171] ml-1">/ person</span>
                                         </p>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <button className="w-full h-14 bg-[#222222] text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center space-x-3 shadow-md active:scale-95">
+                                <button 
+                                    onClick={handleShareQuote}
+                                    className="w-full h-14 bg-[#222222] text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center space-x-3 shadow-md active:scale-95"
+                                >
                                     <Send className="w-5 h-5" />
                                     <span>Share Quote</span>
                                 </button>
