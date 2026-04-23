@@ -1,23 +1,108 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Building2, User, Bell, Lock, CreditCard, Globe } from 'lucide-react';
+import { Building2, User, Bell, Lock, CreditCard, Globe, Camera, Trash2, Loader2 } from 'lucide-react';
+import { getCompanyDetails, updateCompanyDetails } from '../../actions/team';
 
 export default function SettingsPage() {
-    const [companyName, setCompanyName] = useState('Wanderlust Travels');
+    const [companyId, setCompanyId] = useState<string | null>(null);
+    const [companyName, setCompanyName] = useState('g holidays');
     const [companyEmail, setCompanyEmail] = useState('admin@gmail.com');
+    const [phone, setPhone] = useState('+91 98765 43210');
+    const [address, setAddress] = useState('123 Travel Street, Mumbai, India');
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [originalData, setOriginalData] = useState<any>(null);
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRemoveLogo = () => {
+        if (!isEditing) return;
+        setLogoPreview(null);
+    };
+
+    const handleEdit = () => {
+        setOriginalData({ companyName, companyEmail, phone, address, logoPreview });
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        if (originalData) {
+            setCompanyName(originalData.companyName);
+            setCompanyEmail(originalData.companyEmail);
+            setPhone(originalData.phone);
+            setAddress(originalData.address);
+            setLogoPreview(originalData.logoPreview);
+        }
+        setIsEditing(false);
+    };
+
+    const handleSave = async () => {
+        if (!companyId) return;
+
+        setIsSaving(true);
+        try {
+            const result = await updateCompanyDetails({
+                id: companyId,
+                name: companyName,
+                email: companyEmail,
+                phone: phone,
+                address: address,
+                logoUrl: logoPreview
+            });
+
+            if (result.success) {
+                // Update local storage for immediate header update if name changed
+                localStorage.setItem('companyName', companyName);
+                localStorage.setItem('companyEmail', companyEmail);
+                setCompanyEmail(companyEmail);
+                setIsEditing(false);
+                alert('Profile updated successfully!');
+            } else {
+                alert(result.error || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            alert('An error occurred while saving.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     useEffect(() => {
-        const storedCompany = localStorage.getItem('companyName');
-        const storedEmail = localStorage.getItem('companyEmail');
-        if (storedCompany) setCompanyName(storedCompany);
-        if (storedEmail) setCompanyEmail(storedEmail);
+        async function fetchDetails() {
+            const storedCompany = localStorage.getItem('companyName') || 'g holidays';
+            const details = await getCompanyDetails(storedCompany);
+            
+            if (details) {
+                setCompanyId(details.id);
+                setCompanyName(details.name);
+                setCompanyEmail(details.email);
+                setPhone(details.phone);
+                setAddress(details.address || '');
+                setLogoPreview(details.logoUrl || null);
+            }
+            setIsInitialLoading(false);
+        }
+
+        fetchDetails();
     }, []);
 
     return (
         <div className="space-y-10">
             <div>
-                <h1 className="text-3xl font-bold text-[#222222] mb-1">Settings</h1>
+                <h1 className="text-3xl font-bold text-[#222222] mb-1">Profile</h1>
                 <p className="text-[#717171] font-medium">Manage your agency profile, team access, and billing</p>
             </div>
 
@@ -35,14 +120,65 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="space-y-6">
-                        <div className="grid sm:grid-cols-2 gap-6">
+                        {/* Logo Upload Section */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 pb-8 border-b border-[#EBEBEB]">
+                            <div className="relative">
+                                <div className="w-24 h-24 rounded-2xl bg-gray-50 border-2 border-dashed border-[#EBEBEB] flex items-center justify-center overflow-hidden transition-all hover:border-[#222222]">
+                                    {logoPreview ? (
+                                        <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain p-2" />
+                                    ) : (
+                                        <Globe className="w-8 h-8 text-gray-300" />
+                                    )}
+                                </div>
+                                <div className="absolute -bottom-2 -right-2 flex space-x-1">
+                                    {isEditing && (
+                                        <>
+                                            <label className="w-8 h-8 bg-[#222222] text-white rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg border-2 border-white">
+                                                <input type="file" className="hidden" onChange={handleLogoChange} accept="image/*" />
+                                                <Camera className="w-4 h-4" />
+                                            </label>
+                                            {logoPreview && (
+                                                <button 
+                                                    onClick={handleRemoveLogo}
+                                                    className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg border-2 border-white"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-sm font-bold text-[#222222] uppercase tracking-tight mb-1">Agency Logo</h3>
+                                <div className="flex flex-col space-y-2">
+                                    <p className="text-xs text-[#717171] font-medium leading-relaxed max-w-sm">
+                                        Please upload your agency logo with the <span className="font-bold text-[#222222]">background removed (transparent PNG)</span> for best results on brochures and quotes.
+                                    </p>
+                                    {isEditing && logoPreview && (
+                                        <div className="flex space-x-4">
+                                            <label className="text-xs font-bold text-[#222222] cursor-pointer hover:underline">
+                                                <input type="file" className="hidden" onChange={handleLogoChange} accept="image/*" />
+                                                Change Logo
+                                            </label>
+                                            <button onClick={handleRemoveLogo} className="text-xs font-bold text-red-500 hover:underline">
+                                                Remove Logo
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-6 pt-2">
                             <div>
                                 <label className="block text-sm font-bold text-[#222222] mb-2 uppercase tracking-tight">Agency Name</label>
                                 <input
                                     type="text"
                                     value={companyName}
+                                    readOnly={!isEditing}
                                     onChange={(e) => setCompanyName(e.target.value)}
-                                    className="w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#222222] transition-colors font-medium text-[#222222]"
+                                    className={`w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none transition-colors font-medium text-[#222222] ${!isEditing ? 'bg-gray-50 border-transparent cursor-not-allowed' : 'focus:border-[#222222]'}`}
                                 />
                             </div>
                             <div>
@@ -50,8 +186,9 @@ export default function SettingsPage() {
                                 <input
                                     type="email"
                                     value={companyEmail}
+                                    readOnly={!isEditing}
                                     onChange={(e) => setCompanyEmail(e.target.value)}
-                                    className="w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#222222] transition-colors font-medium text-[#222222]"
+                                    className={`w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none transition-colors font-medium text-[#222222] ${!isEditing ? 'bg-gray-50 border-transparent cursor-not-allowed' : 'focus:border-[#222222]'}`}
                                 />
                             </div>
                         </div>
@@ -59,22 +196,54 @@ export default function SettingsPage() {
                             <label className="block text-sm font-bold text-[#222222] mb-2 uppercase tracking-tight">Phone Number</label>
                             <input
                                 type="tel"
-                                defaultValue="+91 98765 43210"
-                                className="w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#222222] transition-colors font-medium text-[#222222]"
+                                value={phone}
+                                readOnly={!isEditing}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className={`w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none transition-colors font-medium text-[#222222] ${!isEditing ? 'bg-gray-50 border-transparent cursor-not-allowed' : 'focus:border-[#222222]'}`}
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-[#222222] mb-2 uppercase tracking-tight">Business Address</label>
                             <textarea
                                 rows={3}
-                                defaultValue="123 Travel Street, Mumbai, India"
-                                className="w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#222222] transition-colors font-medium text-[#222222] resize-none"
+                                value={address}
+                                readOnly={!isEditing}
+                                onChange={(e) => setAddress(e.target.value)}
+                                className={`w-full px-4 py-3 border border-[#EBEBEB] rounded-xl focus:outline-none transition-colors font-medium text-[#222222] resize-none ${!isEditing ? 'bg-gray-50 border-transparent cursor-not-allowed' : 'focus:border-[#222222]'}`}
                             />
                         </div>
-                        <div className="pt-4">
-                            <button className="px-10 py-3.5 bg-[#222222] text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95">
-                                Save Agency Changes
-                            </button>
+                        <div className="pt-4 flex flex-wrap gap-4">
+                            {!isEditing ? (
+                                <button 
+                                    onClick={handleEdit}
+                                    disabled={isInitialLoading}
+                                    className="px-10 py-3.5 bg-[#222222] text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    Edit Profile
+                                </button>
+                            ) : (
+                                <>
+                                    <button 
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        className="px-10 py-3.5 bg-[#222222] text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center min-w-[200px]"
+                                    >
+                                        {isSaving ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : 'Save Changes'}
+                                    </button>
+                                    <button 
+                                        onClick={handleCancel}
+                                        disabled={isSaving}
+                                        className="px-10 py-3.5 bg-white border border-[#EBEBEB] text-[#222222] rounded-xl font-bold hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        Cancel
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

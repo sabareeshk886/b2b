@@ -20,13 +20,19 @@ import { db } from '@/db';
 import { trips, itineraryDays, tripItems, tripPricing } from '@/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import Link from 'next/link';
+import { createQuote } from '@/app/actions/quotes';
+import { toast } from 'sonner';
 
 export default function TripDetailPage({ params }: { params: any }) {
     const [trip, setTrip] = useState<any>(null);
     const [activeTab, setActiveTab] = useState('itinerary');
     const [numPax, setNumPax] = useState(2);
     const [yourMargin, setYourMargin] = useState(5000);
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
+    const [travelDate, setTravelDate] = useState('');
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (trip?.tripPricing?.length > 0) {
@@ -77,20 +83,55 @@ export default function TripDetailPage({ params }: { params: any }) {
     const displayItinerary = hasRealItinerary ? trip.itineraryDays : [];
 
     const handleShareQuote = async () => {
-        const companyName = typeof window !== 'undefined' ? localStorage.getItem('companyName') || 'your travel partner' : 'your travel partner';
-        const tripTheme = trip.category || trip.region || 'Premium';
-        const tripDuration = trip.durationDays ? `${trip.durationDays} Days / ${trip.durationNights || trip.durationDays - 1} Nights` : 'Custom';
-        const brochureLink = trip.pdfUrl ? (trip.pdfUrl.startsWith('http') ? trip.pdfUrl : `${window.location.origin}${trip.pdfUrl.startsWith('/') ? '' : '/'}${trip.pdfUrl}`) : '';
-        
-        const text = `Hello,\n\nHere is the itinerary quote for your upcoming trip.\n\nItinerary: ${trip.title}\nTheme: ${tripTheme}\nDuration: ${tripDuration}\nPassengers: ${numPax}\n\nPrice Per Person: ₹${Math.round(clientPrice/numPax).toLocaleString()}${brochureLink ? `\n\nBrochure: ${brochureLink}` : ''}\n\nRegards,\n${companyName}`;
+        if (!customerPhone || !travelDate) {
+            toast.error('Please enter customer phone and travel date');
+            return;
+        }
+
+        setIsSaving(true);
+        const companyName = typeof window !== 'undefined' ? localStorage.getItem('companyName') || 'g holidays' : 'g holidays';
         
         try {
-            await navigator.clipboard.writeText(text);
-        } catch (err) {
-            console.error('Failed to copy text', err);
+            // 1. Save Quote to DB
+            const result = await createQuote({
+                customerName: customerName || 'Customer',
+                customerPhone,
+                tripId: trip.id,
+                pax: numPax,
+                travelDate,
+                basePrice: ppp,
+                finalPrice: clientPrice / numPax,
+                companyName: companyName
+            });
+
+            if (result.error) {
+                toast.error(result.error);
+                return;
+            }
+
+            // 2. Clear status and notify
+            toast.success('Quote saved and ready to share!');
+
+            // 3. Prepare WhatsApp Message
+            const tripTheme = trip.category || trip.region || 'Premium';
+            const tripDuration = trip.durationDays ? `${trip.durationDays} Days / ${trip.durationNights || trip.durationDays - 1} Nights` : 'Custom';
+            const cleanBrochureUrl = `${window.location.origin}/brochure/${trip.code}`;
+            
+            const text = `Hello ${customerName ? customerName : ''},\n\nHere is the itinerary quote for your upcoming trip.\n\nItinerary: ${trip.title}\nTheme: ${tripTheme}\nDuration: ${tripDuration}\nTravel Date: ${travelDate}\nPassengers: ${numPax}\n\nPrice Per Person: ₹${Math.round(clientPrice/numPax).toLocaleString()}${trip.pdfUrl ? `\n\n📄 View Full Brochure: ${cleanBrochureUrl}` : ''}\n\nRegards,\n${companyName}`;
+            
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (err) {
+                console.error('Failed to copy text', err);
+            }
+            
+            window.open(`https://wa.me/${customerPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+        } catch (error) {
+            console.error('Error in sharing quote:', error);
+            toast.error('Failed to save or share quote');
+        } finally {
+            setIsSaving(false);
         }
-        
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     const tabs = ['itinerary', 'overview', 'inclusions', 'brochure'];
@@ -371,63 +412,101 @@ export default function TripDetailPage({ params }: { params: any }) {
                                 </div>
                             )}
 
-                            {/* Margin Calculator Tool */}
+                            {/* Margin & Customer Tool */}
                             <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-5">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-black text-[#222222] uppercase tracking-tighter">Margin Tool</span>
+                                    <span className="text-sm font-black text-[#222222] uppercase tracking-tighter">Quote Setup</span>
                                     <Calculator className="w-4 h-4 text-[#717171]" />
                                 </div>
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Passenger Count</label>
-                                        <select 
-                                            value={numPax}
-                                            onChange={(e) => setNumPax(Number(e.target.value))}
-                                            className="w-full bg-white border border-[#EBEBEB] px-4 py-3 rounded-xl font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
-                                        >
-                                            {generatedPaxOptions.map((n: number) => <option key={n} value={n}>{n} Pax</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Your Markup (per pax) (₹)</label>
-                                            <span className="text-[10px] font-black text-[#006A4E]">{marginPercentage}%</span>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Passenger Count</label>
+                                            <select 
+                                                value={numPax}
+                                                onChange={(e) => setNumPax(Number(e.target.value))}
+                                                className="w-full bg-white border border-[#EBEBEB] px-3 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
+                                            >
+                                                {generatedPaxOptions.map((n: number) => <option key={n} value={n}>{n} Pax</option>)}
+                                            </select>
                                         </div>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Markup (₹)</label>
+                                            </div>
+                                            <input 
+                                                type="number"
+                                                value={yourMargin}
+                                                onChange={(e) => setYourMargin(Number(e.target.value))}
+                                                className="w-full bg-white border border-[#EBEBEB] px-3 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Customer Name</label>
                                         <input 
-                                            type="number"
-                                            value={yourMargin}
-                                            onChange={(e) => setYourMargin(Number(e.target.value))}
-                                            className="w-full bg-white border border-[#EBEBEB] px-4 py-3 rounded-xl font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
+                                            type="text"
+                                            placeholder="Enter customer name"
+                                            value={customerName}
+                                            onChange={(e) => setCustomerName(e.target.value)}
+                                            className="w-full bg-white border border-[#EBEBEB] px-4 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
                                         />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Phone Number</label>
+                                            <input 
+                                                type="tel"
+                                                placeholder="9876543210"
+                                                value={customerPhone}
+                                                onChange={(e) => setCustomerPhone(e.target.value)}
+                                                className="w-full bg-white border border-[#EBEBEB] px-4 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Travel Date</label>
+                                            <input 
+                                                type="date"
+                                                value={travelDate}
+                                                onChange={(e) => setTravelDate(e.target.value)}
+                                                className="w-full bg-white border border-[#EBEBEB] px-4 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="pt-4 border-t border-gray-200 space-y-1">
                                     {isPriceAvailable && (
-                                        <div className="flex justify-between text-xs font-bold text-[#717171] mb-2">
+                                        <div className="flex justify-between text-[10px] font-bold text-[#717171] mb-1">
                                             <span>Net B2B (per pax)</span>
                                             <span>₹{ppp.toLocaleString()}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-baseline">
                                         <p className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Final Client Price</p>
-                                        <p className="text-2xl font-black text-[#222222]">
+                                        <p className="text-xl font-black text-[#222222]">
                                             {isPriceAvailable 
                                                 ? `₹${Math.round(clientPrice / numPax).toLocaleString()}` 
-                                                : `Base + ₹${Math.round(yourMargin / numPax).toLocaleString()}`}
-                                            <span className="text-sm font-bold text-[#717171] ml-1">/ person</span>
+                                                : `Base + ₹${Math.round(yourMargin).toLocaleString()}`}
+                                            <span className="text-xs font-bold text-[#717171] ml-1">/ person</span>
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <button 
-                                    onClick={handleShareQuote}
-                                    className="w-full h-14 bg-[#222222] text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center space-x-3 shadow-md active:scale-95"
+                                <Link 
+                                    href={`/dashboard/quotes/new?tripId=${trip.id}&pax=${numPax}&margin=${yourMargin}`}
+                                    className="block"
                                 >
-                                    <Send className="w-5 h-5" />
-                                    <span>Share Quote</span>
-                                </button>
+                                    <button 
+                                        className="w-full h-14 bg-[#006A4E] text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#005a42] transition-all flex items-center justify-center space-x-3 shadow-md active:scale-95"
+                                    >
+                                        <Send className="w-5 h-5" />
+                                        <span>Create Quote</span>
+                                    </button>
+                                </Link>
                                 {trip.pdfUrl && (
                                     <button 
                                         onClick={() => window.open(trip.pdfUrl!, '_blank')}

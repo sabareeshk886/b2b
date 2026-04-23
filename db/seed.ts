@@ -7,7 +7,7 @@ async function seed() {
 
     // Create demo companies
     const [demoCompany] = await db.insert(companies).values({
-        name: 'Wanderlust Travels',
+        name: 'g holidays',
         email: 'info@wanderlust.com',
         phone: '+91 98765 43210',
         address: 'Mumbai, Maharashtra, India',
@@ -25,7 +25,7 @@ async function seed() {
     const passwordHash = await bcrypt.hash('demo123', 10);
     await db.insert(users).values({
         companyId: demoCompany.id,
-        name: 'Demo User',
+        name: 'Sabareesh',
         email: 'demo@wanderlust.com',
         passwordHash,
         role: 'admin',

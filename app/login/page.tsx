@@ -13,8 +13,8 @@ export default function LoginPage() {
         e.preventDefault();
         console.log('Login:', { email, password });
         
-        localStorage.setItem('companyName', 'Fernway Default Partner');
-        localStorage.setItem('userName', email || 'Demo User');
+        localStorage.setItem('companyName', 'g holidays');
+        localStorage.setItem('userName', email || 'Sabareesh');
         
         // Redirect to dashboard for demo
         window.location.href = '/dashboard';

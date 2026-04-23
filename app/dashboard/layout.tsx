@@ -8,6 +8,7 @@ import {
     Package,
     FileText,
     Calendar,
+    User,
     Settings,
     Users,
     LogOut,
@@ -18,17 +19,37 @@ import {
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-    const [companyName, setCompanyName] = useState('Wanderlust Travels');
-    const [userName, setUserName] = useState('Demo User');
+    const [companyName, setCompanyName] = useState('g holidays');
+    const [userName, setUserName] = useState('Sabareesh');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
 
     useEffect(() => {
+        setMounted(true);
         const storedCompany = localStorage.getItem('companyName');
         const storedUser = localStorage.getItem('userName');
-        if (storedCompany) setCompanyName(storedCompany);
-        if (storedUser) setUserName(storedUser);
+        
+        // Migration: Update old names to 'g holidays'
+        if (storedCompany === 'Fernway Default Partner' || storedCompany === 'Wanderlust Travels') {
+            setCompanyName('g holidays');
+            localStorage.setItem('companyName', 'g holidays');
+        } else if (storedCompany) {
+            setCompanyName(storedCompany);
+        }
+        
+        // Migration: Update old names to 'Sabareesh'
+        if (storedUser === 'Demo User') {
+            setUserName('Sabareesh');
+            localStorage.setItem('userName', 'Sabareesh');
+        } else if (storedUser) {
+            setUserName(storedUser);
+        }
     }, []);
+
+    // Prevent hydration mismatch by only rendering client-specific details after mount
+    const displayCompanyName = mounted ? companyName : 'g holidays';
+    const displayUserName = mounted ? userName : 'Sabareesh';
 
     return (
         <div className="min-h-screen bg-white">
@@ -46,7 +67,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         { icon: FileText, label: 'My Quotes', href: '/dashboard/quotes' },
                         { icon: Calendar, label: 'Bookings', href: '/dashboard/bookings' },
                         { icon: Users, label: 'Team', href: '/dashboard/team' },
-                        { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+                        { icon: User, label: 'Profile', href: '/dashboard/settings' },
                     ].map((item, idx) => {
                         const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
                         return (
@@ -95,7 +116,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <header className="bg-white/80 backdrop-blur-md border-b border-[#EBEBEB] px-8 py-4 sticky top-0 z-40 h-20 flex items-center">
                     <div className="flex items-center justify-between w-full">
                         <div>
-                            <h1 className="text-xl font-bold text-[#222222]">{companyName}</h1>
+                            <h1 className="text-xl font-bold text-[#222222]">{displayCompanyName}</h1>
                             <p className="text-xs text-[#717171] font-medium">B2B Partner Dashboard</p>
                         </div>
                         <div className="flex items-center space-x-3">
@@ -109,9 +130,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                                     className="flex items-center space-x-3 border border-[#EBEBEB] p-1.5 pl-3 rounded-full cursor-pointer hover:shadow-airbnb transition-all ml-2 bg-white"
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 >
-                                    <span className="text-sm font-bold text-[#222222]">{userName}</span>
+                                    <span className="text-sm font-bold text-[#222222]">{displayUserName}</span>
                                     <div className="w-8 h-8 rounded-full bg-[#222222] flex items-center justify-center text-white text-xs font-bold">
-                                        {userName.charAt(0).toUpperCase()}
+                                        {displayUserName.charAt(0).toUpperCase()}
                                     </div>
                                     <ChevronDown className="w-4 h-4 text-[#717171] mr-1" />
                                 </div>
