@@ -99,15 +99,15 @@ export default function QuotesPage() {
                                                 </span>
                                             </div>
                                             <p className="text-xs text-[#717171] font-bold tracking-tight uppercase">
-                                                {quote.id.substring(0, 8)} • {date} • {pax} Pax
+                                                {quote.tripCode || quote.id.substring(0, 8)} • {date} • {pax} Pax
                                             </p>
                                             <p className="text-sm font-semibold text-[#222222] flex items-center">
                                                 {quote.customerPhone}
                                             </p>
                                         </div>
-                                        <div className="text-left md:text-right space-y-1">
-                                            <p className="text-2xl font-bold text-[#222222]">₹{totalAmount.toLocaleString()}</p>
-                                            <p className="text-xs font-bold text-[#006A4E] uppercase tracking-wide">₹{ppp.toLocaleString()} / person</p>
+                                        <div className="text-left md:text-right">
+                                            <p className="text-2xl font-bold text-[#222222]">₹{ppp.toLocaleString()}</p>
+                                            <p className="text-[10px] font-black text-[#717171] uppercase tracking-[0.2em]">Per Person Rate</p>
                                         </div>
                                     </div>
 

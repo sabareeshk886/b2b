@@ -30,20 +30,32 @@ type Trip = {
 const REGION_IMAGES: Record<string, string[]> = {
     'MUMBAI': ['/images/catalog/mum%201.jpg', '/images/catalog/mum%202.jpg', '/images/catalog/mum%203.jpg'],
     'MATHERAN': ['/images/catalog/mat%201.jpg', '/images/catalog/mat%203.jpg'],
-    'AGRA': ['/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/राज%201.jpg'],
+    'AGRA': ['/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/raj%201.jpg'],
     'RAJASTHAN': ['/images/catalog/raj%201.jpg', '/images/catalog/raj%202.jpg', '/images/catalog/raj%203.jpg'],
     'PUNJAB': ['/images/catalog/amr%201.jpg', '/images/catalog/amr%202.jpg'],
     'CHENNAI': ['/images/catalog/chn%201.jpg', '/images/catalog/chn%202.jpg'],
     'DELHI': ['/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/del%203.jpg'],
     'KASOL': ['/images/catalog/ksl%201.jpg', '/images/catalog/ksl%202.jpg'],
     'MANALI': ['/images/catalog/man%201.jpg', '/images/catalog/man%202.jpg', '/images/catalog/man%203.jpg'],
+    'NORTH': [
+        '/images/catalog/man%201.jpg', 
+        '/images/catalog/del%201.jpg', 
+        'https://images.unsplash.com/photo-1506461883276-594a12b11cf3?w=800&q=80',
+        'https://images.unsplash.com/photo-1544735230-c12844a89cd4?w=800&q=80'
+    ],
     'KERALA': ['https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80'],
     'HIMACHAL': ['/images/catalog/man%201.jpg'],
     'KASHMIR': ['https://images.unsplash.com/photo-1598091383021-15ddea10925d?w=800&q=80'],
     'GOA': ['https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80'],
     'DUBAI': ['https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&q=80'],
     'BALI': ['https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80'],
-    'DEFAULT': ['https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80']
+    'DEFAULT': [
+        'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80',
+        'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80',
+        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80',
+        'https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=800&q=80',
+        'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80'
+    ]
 };
 
 const getStartingPrice = (trip: Trip): number => {
@@ -51,6 +63,38 @@ const getStartingPrice = (trip: Trip): number => {
     const sorted = [...trip.tripPricing].sort((a, b) => a.minPax - b.minPax);
     return parseFloat(sorted[0].pricePerPerson) || 0;
 };
+
+const getFallbackImage = (trip: Trip) => {
+    const seedStr = trip.id || trip.code || 'default';
+    const hashVal = seedStr.split('').reduce((acc: number, char: string) => (((acc << 5) - acc) + char.charCodeAt(0)) | 0, 0);
+    const hash = Math.abs(hashVal);
+    const text = (trip.title + ' ' + (trip.region || '') + ' ' + (trip.destinations?.join(' ') || '')).toUpperCase();
+    
+    let category = 'DEFAULT';
+    if (text.includes('DUBAI')) category = 'DUBAI';
+    else if (text.includes('BALI')) category = 'BALI';
+    else if (text.includes('THAI')) category = 'THAI';
+    else if (text.includes('MALDIVES')) category = 'MALDIVES';
+    else if (text.includes('VIETNAM')) category = 'VIETNAM';
+    else if (text.includes('SINGAPORE')) category = 'SINGAPORE';
+    else if (text.includes('EUROPE')) category = 'EUROPE';
+    else if (text.includes('KASHMIR')) category = 'KASHMIR';
+    else if (text.includes('MANALI')) category = 'MANALI';
+    else if (text.includes('KASOL')) category = 'KASOL';
+    else if (text.includes('ANDAMAN')) category = 'ANDAMAN';
+    else if (text.includes('GOA')) category = 'GOA';
+    else if (text.includes('KERALA')) category = 'KERALA';
+    else if (text.includes('RAJASTHAN')) category = 'RAJASTHAN';
+    else if (text.includes('PUNJAB')) category = 'PUNJAB';
+    else if (text.includes('CHENNAI')) category = 'CHENNAI';
+    else if (text.includes('AGRA')) category = 'AGRA';
+    else if (text.includes('DELHI')) category = 'DELHI';
+    else if (text.includes('NORTH')) category = 'NORTH';
+    else if (text.includes('AGR')) category = 'NORTH';
+
+    const pool = REGION_IMAGES[category] || REGION_IMAGES['DEFAULT'];
+    return pool[hash % pool.length];
+}
 
 export default function TripsPage() {
     const [trips, setTrips] = useState<Trip[]>([]);
@@ -76,8 +120,8 @@ export default function TripsPage() {
     });
 
     const getTripImage = (trip: Trip) => {
-        if (imgErrors[trip.id]) return REGION_IMAGES['DEFAULT'][0];
-        return trip.imageUrl || REGION_IMAGES['DEFAULT'][0];
+        if (imgErrors[trip.id]) return getFallbackImage(trip);
+        return trip.imageUrl || getFallbackImage(trip);
     };
 
     return (

@@ -69,13 +69,25 @@ function NewQuoteForm() {
         'DELHI': ['/images/catalog/del%201.jpg', '/images/catalog/del%202.jpg', '/images/catalog/del%203.jpg'],
         'KASOL': ['/images/catalog/ksl%201.jpg', '/images/catalog/ksl%202.jpg'],
         'MANALI': ['/images/catalog/man%201.jpg', '/images/catalog/man%202.jpg', '/images/catalog/man%203.jpg'],
+        'NORTH': [
+            '/images/catalog/man%201.jpg', 
+            '/images/catalog/del%201.jpg', 
+            'https://images.unsplash.com/photo-1506461883276-594a12b11cf3?w=800&q=80',
+            'https://images.unsplash.com/photo-1544735230-c12844a89cd4?w=800&q=80'
+        ],
         'KERALA': ['https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80'],
         'HIMACHAL': ['/images/catalog/man%201.jpg'],
         'KASHMIR': ['https://images.unsplash.com/photo-1598091383021-15ddea10925d?w=800&q=80'],
         'GOA': ['https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80'],
         'DUBAI': ['https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&q=80'],
         'BALI': ['https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80'],
-        'DEFAULT': ['https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80']
+        'DEFAULT': [
+            'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80',
+            'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80',
+            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80',
+            'https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=800&q=80',
+            'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80'
+        ]
     };
 
     const getFallbackImage = (trip: any) => {
@@ -112,7 +124,9 @@ function NewQuoteForm() {
 
     const getTripImage = (trip: any) => {
         if (imgErrors[trip.id]) return getFallbackImage(trip);
-        return trip.imageUrl || getFallbackImage(trip);
+        // Encode spaces in local image URLs to ensure proper loading
+        const safeUrl = typeof trip.imageUrl === 'string' ? trip.imageUrl.replace(/ /g, '%20') : null;
+        return safeUrl || getFallbackImage(trip);
     };
 
     const filteredTrips = trips.filter(trip => 
@@ -122,14 +136,22 @@ function NewQuoteForm() {
     );
 
     const getCurrentTierPrice = () => {
-        if (!selectedTrip || !selectedTrip.tripPricing) return 0;
-        const tier = selectedTrip.tripPricing.find((t: any) => numPax >= t.minPax && (t.maxPax === null || numPax <= t.maxPax));
-        return parseFloat(tier?.pricePerPerson || selectedTrip.basePrice || 0);
+        if (!selectedTrip) return 0;
+        if (!selectedTrip.tripPricing || selectedTrip.tripPricing.length === 0) {
+            return Number(selectedTrip.basePrice || 0);
+        }
+        // Sort tiers by minPax descending to find the highest applicable tier for current numPax
+        const sortedTiers = [...selectedTrip.tripPricing].sort((a: any, b: any) => Number(b.minPax) - Number(a.minPax));
+        const tier = sortedTiers.find((t: any) => 
+            Number(numPax) >= Number(t.minPax) && 
+            (t.maxPax === null || t.maxPax === undefined || Number(numPax) <= Number(t.maxPax))
+        );
+        return Number(tier?.pricePerPerson || selectedTrip.basePrice || 0);
     };
 
     const ppp = getCurrentTierPrice();
-    const clientPricePerPerson = ppp + yourMargin;
-    const totalAmount = clientPricePerPerson * numPax;
+    const clientPricePerPerson = Number(ppp) + Number(yourMargin);
+    const totalAmount = clientPricePerPerson * Number(numPax);
 
     const handleCreateQuote = async () => {
         if (!selectedTrip) {
@@ -252,7 +274,7 @@ function NewQuoteForm() {
                                                 />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-[#222222] truncate">{trip.title}</h3>
+                                                <h3 className="font-bold text-[#222222] truncate"><span className="text-[#006A4E]">{trip.code}</span> - {trip.title}</h3>
                                                 <p className="text-xs text-[#717171] font-medium">{trip.region} • {trip.durationDays} Days</p>
                                             </div>
                                             {selectedTrip?.id === trip.id && <Check className="w-5 h-5 text-[#006A4E]" />}
@@ -348,7 +370,20 @@ function NewQuoteForm() {
                                                 onChange={(e) => setNumPax(Number(e.target.value))}
                                                 className="w-full pl-12 pr-5 py-3.5 border border-[#EBEBEB] rounded-2xl focus:outline-none focus:border-[#222222] font-bold text-[#222222] appearance-none cursor-pointer"
                                             >
-                                                {[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50].map(n => <option key={n} value={n}>{n} Pax</option>)}
+                                                {selectedTrip && selectedTrip.tripPricing ? (
+                                                    selectedTrip.tripPricing
+                                                        .map((tier: any) => tier.minPax)
+                                                        .filter((value: number, index: number, self: number[]) => self.indexOf(value) === index)
+                                                        .sort((a: number, b: number) => a - b)
+                                                        .map((pax: number) => (
+                                                            <option key={pax} value={pax}>{pax} Pax</option>
+                                                        ))
+                                                ) : (
+                                                    // Fallback to a default range if no pricing data yet
+                                                    [1,2,3,4,5,6,8,10,12,15,20,25,30,40,50].map(n => (
+                                                        <option key={n} value={n}>{n} Pax</option>
+                                                    ))
+                                                )}
                                             </select>
                                             <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                         </div>
@@ -394,8 +429,8 @@ function NewQuoteForm() {
                                     <div className="pt-2">
                                         <div className="flex justify-between items-end mb-2">
                                             <div>
-                                                <p className="text-[10px] font-black text-[#717171] uppercase tracking-[0.2em] mb-1">Total Client Price</p>
-                                                <p className="text-4xl font-black text-[#222222]">₹{totalAmount.toLocaleString()}</p>
+                                                <p className="text-[10px] font-black text-[#717171] uppercase tracking-[0.2em] mb-1">Price Per Person</p>
+                                                <p className="text-4xl font-black text-[#222222]">₹{Math.round(clientPricePerPerson).toLocaleString()}</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[10px] font-black text-[#006A4E] uppercase tracking-widest">Estimated Margin</p>
@@ -404,7 +439,7 @@ function NewQuoteForm() {
                                         </div>
                                         <div className="w-full h-1 bg-emerald-500 rounded-full" />
                                         <p className="text-center mt-4 text-[10px] font-black text-[#717171] uppercase tracking-widest">
-                                            ₹{Math.round(clientPricePerPerson).toLocaleString()} per person for {numPax} passengers
+                                            For {numPax} passengers • Total ₹{totalAmount.toLocaleString()}
                                         </p>
                                     </div>
                                 </div>

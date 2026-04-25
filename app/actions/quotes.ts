@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from '../../db';
-import { quotes, companies } from '../../db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { quotes, companies, trips } from '../../db/schema';
+import { eq, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 export async function createQuote(data: {
@@ -60,12 +60,25 @@ export async function getQuotes(companyName: string) {
 
         if (!company) return [];
 
-        const allQuotes = await db.select()
+        const allQuotes = await db.select({
+            id: quotes.id,
+            companyId: quotes.companyId,
+            customerName: quotes.customerName,
+            customerPhone: quotes.customerPhone,
+            selectedTrips: quotes.selectedTrips,
+            totalBasePrice: quotes.totalBasePrice,
+            finalPrice: quotes.finalPrice,
+            status: quotes.status,
+            createdAt: quotes.createdAt,
+            updatedAt: quotes.updatedAt,
+            tripCode: trips.code
+        })
             .from(quotes)
+            .leftJoin(trips, sql`${quotes.selectedTrips}->0->>'tripId' = ${trips.id}::text`)
             .where(eq(quotes.companyId, company.id))
             .orderBy(desc(quotes.createdAt));
 
-        return allQuotes;
+        return allQuotes as any[];
     } catch (error) {
         console.error('Error fetching quotes:', error);
         return [];
