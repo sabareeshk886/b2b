@@ -135,6 +135,32 @@ export default function TripDetailPage({ params }: { params: any }) {
     };
 
     const tabs = ['itinerary', 'overview', 'inclusions', 'brochure'];
+    const displayTitle = typeof trip?.title === 'string'
+        ? trip.title
+            .replace(/\bKOD\b/gi, 'Kodaikanal')
+            .replace(/\bRMKL\b/gi, 'Ramakkalmedu')
+            .replace(/\bMNR\b/gi, 'Munnar')
+            .replace(/\bEKM\b/gi, 'Ernakulam')
+            .replace(/\bVGM\b/gi, 'Vagamon')
+            .replace(/\bWGM\b/gi, 'Wagamon')
+            .replace(/\bOTY\b/gi, 'Ooty')
+            .replace(/\bBLR\b/gi, 'Bangalore')
+            .replace(/\bMYSR\b/gi, 'Mysore')
+            .replace(/\bMYS\b/gi, 'Mysore')
+            .replace(/\bCRG\b/gi, 'Coorg')
+            .replace(/\bCHIK\b/gi, 'Chickmagaluru')
+            .replace(/\bCHK\b/gi, 'Chickmagaluru')
+            .replace(/\bBELR\b/gi, 'Belur')
+            .replace(/\bUDP\b/gi, 'Udupi')
+            .replace(/\bDND\b/gi, 'Dandeli')
+            .replace(/\bGKR\b/gi, 'Gokarna')
+            .replace(/\bGKRN\b/gi, 'Gokarna')
+            .replace(/\bGA\b/gi, 'Goa')
+            .replace(/\bWND\b/gi, 'Wonderla')
+            .replace(/\bWNDR\b/gi, 'Wonderla')
+            .replace(/\bHMP\b/gi, 'Hampi')
+            .replace(/\bMAL\b/gi, 'Malwan')
+        : trip?.title;
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20">
@@ -142,7 +168,7 @@ export default function TripDetailPage({ params }: { params: any }) {
             <div className="flex items-center space-x-2 text-sm font-bold text-[#717171] uppercase tracking-widest">
                 <Link href="/dashboard/trips" className="hover:text-[#222222] transition-colors">Catalog</Link>
                 <ChevronRight className="w-4 h-4" />
-                <span className="text-[#222222]">{trip.code}</span>
+                <span className="text-[#222222]">{displayTitle?.toUpperCase?.() || trip.title}</span>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-12">
@@ -150,7 +176,7 @@ export default function TripDetailPage({ params }: { params: any }) {
                 <div className="lg:col-span-2 space-y-10">
                     <div>
                         <div className="flex items-center justify-between mb-4">
-                            <h1 className="text-4xl font-black text-[#222222] tracking-tighter">{trip.title}</h1>
+                            <h1 className="text-4xl font-black text-[#222222] tracking-tighter">{displayTitle?.toUpperCase?.() || trip.title}</h1>
                             <span className="px-4 py-1.5 bg-[#222222] text-white text-[10px] font-black rounded-full uppercase tracking-widest">
                                 {trip.category || trip.region || 'Premium'}
                             </span>

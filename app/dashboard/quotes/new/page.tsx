@@ -59,6 +59,34 @@ function NewQuoteForm() {
         }
         fetchTrips();
     }, [tripIdFromQuery]);
+
+    const getDisplayTripTitle = (title: string) =>
+        title
+            .replace(/\bKOD\b/gi, 'KODAIKANAL')
+            .replace(/\bRMKL\b/gi, 'RAMAKKALMEDU')
+            .replace(/\bMNR\b/gi, 'MUNNAR')
+            .replace(/\bEKM\b/gi, 'ERNAKULAM')
+            .replace(/\bVGM\b/gi, 'VAGAMON')
+            .replace(/\bWGM\b/gi, 'WAGAMON')
+            .replace(/\bOTY\b/gi, 'OOTY')
+            .replace(/\bBLR\b/gi, 'BANGALORE')
+            .replace(/\bMYSR\b/gi, 'MYSORE')
+            .replace(/\bMYS\b/gi, 'MYSORE')
+            .replace(/\bCRG\b/gi, 'COORG')
+            .replace(/\bCHIK\b/gi, 'CHICKMAGALURU')
+            .replace(/\bCHK\b/gi, 'CHICKMAGALURU')
+            .replace(/\bCK\b/gi, 'CHICKMAGALURU')
+            .replace(/\bBELR\b/gi, 'BELUR')
+            .replace(/\bUDP\b/gi, 'UDUPI')
+            .replace(/\bDND\b/gi, 'DANDELI')
+            .replace(/\bGKR\b/gi, 'GOKARNA')
+            .replace(/\bGKRN\b/gi, 'GOKARNA')
+            .replace(/\bGA\b/gi, 'GOA')
+            .replace(/\bWND\b/gi, 'WONDERLA')
+            .replace(/\bWNDR\b/gi, 'WONDERLA')
+            .replace(/\bHMP\b/gi, 'HAMPI')
+            .replace(/\bMAL\b/gi, 'MALWAN')
+            .toUpperCase();
     const REGION_IMAGES: Record<string, string[]> = {
         'MUMBAI': ['/images/catalog/mum%201.jpg', '/images/catalog/mum%202.jpg', '/images/catalog/mum%203.jpg'],
         'MATHERAN': ['/images/catalog/mat%201.jpg', '/images/catalog/mat%203.jpg'],
@@ -274,7 +302,7 @@ function NewQuoteForm() {
                                                 />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-[#222222] truncate"><span className="text-[#006A4E]">{trip.code}</span> - {trip.title}</h3>
+                                                <h3 className="font-bold text-[#222222] truncate"><span className="text-[#006A4E]">{trip.code}</span> - {getDisplayTripTitle(trip.title)}</h3>
                                                 <p className="text-xs text-[#717171] font-medium">{trip.region} • {trip.durationDays} Days</p>
                                             </div>
                                             {selectedTrip?.id === trip.id && <Check className="w-5 h-5 text-[#006A4E]" />}
@@ -292,7 +320,7 @@ function NewQuoteForm() {
                                     />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-xl font-bold tracking-tight">{selectedTrip.title}</h3>
+                                    <h3 className="text-xl font-bold tracking-tight">{getDisplayTripTitle(selectedTrip.title)}</h3>
                                     <p className="text-sm text-gray-400 font-medium">{selectedTrip.region} • {selectedTrip.durationDays}D / {selectedTrip.durationNights}N</p>
                                     <div className="mt-2 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 bg-white/20 rounded inline-block">
                                         {selectedTrip.code}

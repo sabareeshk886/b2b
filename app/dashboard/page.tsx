@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { TrendingUp, Package, FileText, Users, ArrowUpRight } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -70,9 +71,9 @@ export default function DashboardPage() {
                             <h2 className="text-xl font-bold text-[#222222]">Recent Quotes</h2>
                             <p className="text-sm text-[#717171] font-medium">Your latest B2B requests</p>
                         </div>
-                        <a href="/dashboard/quotes" className="text-sm font-bold text-[#006A4E] hover:underline">
+                        <Link href="/dashboard/quotes" className="text-sm font-bold text-[#006A4E] hover:underline">
                             View all
-                        </a>
+                        </Link>
                     </div>
                     
                     <div className="divide-y divide-[#EBEBEB]">
@@ -104,9 +105,9 @@ export default function DashboardPage() {
                             <div className="py-8 text-center">
                                 <FileText className="w-8 h-8 text-gray-300 mx-auto mb-3" />
                                 <p className="text-sm font-medium text-gray-500">No quotes generated yet.</p>
-                                <a href="/dashboard/trips" className="inline-block mt-4 text-sm font-bold text-[#006A4E] hover:underline">
+                                <Link href="/dashboard/trips" className="inline-block mt-4 text-sm font-bold text-[#006A4E] hover:underline">
                                     Create your first quote
-                                </a>
+                                </Link>
                             </div>
                         )}
                     </div>
@@ -137,13 +138,13 @@ export default function DashboardPage() {
                                 { label: 'Generate PDF Brochure', href: '/dashboard/trips' },
                                 { label: 'Manage Your Team', href: '/dashboard/team' },
                             ].map((action, idx) => (
-                                <a
+                                <Link
                                     key={idx}
                                     href={action.href}
                                     className="block w-full text-left py-3.5 px-5 border border-[#EBEBEB] rounded-xl text-sm font-bold text-[#222222] hover:bg-gray-50 hover:border-[#222222] transition-all"
                                 >
                                     {action.label}
-                                </a>
+                                </Link>
                             ))}
                         </div>
                     </div>
