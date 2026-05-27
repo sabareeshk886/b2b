@@ -252,7 +252,7 @@ const getImageCategory = (text: string) => {
     return category;
 }
 
-const getFallbackImage = (trip: Trip) => {
+const getFallbackImage = (trip: Trip, tileIndex: number = 0) => {
     const expandedTitle = getDisplayTripTitle(trip.title);
     const text = (expandedTitle + ' ' + (trip.region || '') + ' ' + (trip.destinations?.join(' ') || '')).toUpperCase();
     const category = getImageCategory(text);
@@ -272,11 +272,12 @@ const getFallbackImage = (trip: Trip) => {
         .map((p) => getImageCategory(p))
         .filter((c) => c !== 'DEFAULT' && REGION_IMAGES[c]?.length);
 
-    const finalPool = placeCategories.length > 0
-        ? REGION_IMAGES[placeCategories[baseHash % placeCategories.length]]
-        : pool;
+    // Prefer first recognized route place for relevance (e.g. KOD-RMKL-MNR -> KODAIKANAL image pool).
+    const preferredCategory = placeCategories.length > 0 ? placeCategories[0] : category;
+    const finalPool = REGION_IMAGES[preferredCategory] || pool;
 
-    return finalPool[baseHash % finalPool.length];
+    // Offset by tile index to reduce adjacent-card duplicates.
+    return finalPool[(baseHash + tileIndex) % finalPool.length];
 }
 
 export default function TripsPage() {
@@ -308,9 +309,9 @@ export default function TripsPage() {
         return matchesSearch && matchesRegion && matchesSouthDuration;
     });
 
-    const getTripImage = (trip: Trip) => {
-        if (imgErrors[trip.id]) return getFallbackImage(trip);
-        return trip.imageUrl || getFallbackImage(trip);
+    const getTripImage = (trip: Trip, tileIndex: number) => {
+        if (imgErrors[trip.id]) return getFallbackImage(trip, tileIndex);
+        return trip.imageUrl || getFallbackImage(trip, tileIndex);
     };
 
     return (
@@ -363,11 +364,11 @@ export default function TripsPage() {
                 <div className="text-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006A4E] mx-auto"></div></div>
             ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredTrips.map((trip) => (
+                    {filteredTrips.map((trip, idx) => (
                         <div key={trip.id} className="flex flex-col group border border-[#EBEBEB] rounded-2xl overflow-hidden hover:shadow-lg transition-all bg-white">
                             <Link href={`/dashboard/trips/${trip.id}`} className="flex flex-col">
                                 <div className="relative aspect-[4/3] overflow-hidden">
-                                    <Image src={getTripImage(trip)} alt={trip.title} fill className="object-cover group-hover:scale-105 transition-transform" onError={() => setImgErrors(prev => ({ ...prev, [trip.id]: true }))} />
+                                    <Image src={getTripImage(trip, idx)} alt={trip.title} fill className="object-cover group-hover:scale-105 transition-transform" onError={() => setImgErrors(prev => ({ ...prev, [trip.id]: true }))} />
                                 </div>
                                 <div className="p-4 space-y-1">
                                     <h3 className="font-bold text-[#222222] truncate text-base">{getDisplayTripTitle(trip.title).toUpperCase()}</h3>
