@@ -73,8 +73,8 @@ export default function TripDetailPage({ params }: { params: any }) {
     const clientPrice = (ppp + yourMargin) * numPax;
     const marginPercentage = ppp > 0 ? Math.round((yourMargin / ppp) * 100) : 0;
 
-    const inclusions = trip.tripItems?.filter((i: any) => i.type === 'inclusion').map((i: any) => i.content) || [];
-    const exclusions = trip.tripItems?.filter((i: any) => i.type === 'exclusion').map((i: any) => i.content) || [];
+    const inclusions = trip.tripItems?.filter((i: any) => i.type === 'inclusion').map((i: any) => i.item) || [];
+    const exclusions = trip.tripItems?.filter((i: any) => i.type === 'exclusion').map((i: any) => i.item) || [];
 
     const hasPricingTiers = trip.tripPricing && trip.tripPricing.length > 0;
     const hasRealItinerary = trip.itineraryDays && trip.itineraryDays.length > 0;
@@ -134,7 +134,7 @@ export default function TripDetailPage({ params }: { params: any }) {
         }
     };
 
-    const tabs = ['itinerary', 'overview', 'inclusions', 'brochure'];
+    const tabs = ['itinerary', 'overview', 'policies', 'brochure'] as const;
     const displayTitle = typeof trip?.title === 'string'
         ? trip.title
             .replace(/\bKOD\b/gi, 'Kodaikanal')
@@ -263,7 +263,7 @@ export default function TripDetailPage({ params }: { params: any }) {
                                 <div className="space-y-10 py-4">
                                     <div className="space-y-4">
                                         <h2 className="text-2xl font-bold text-[#222222]">The Experience</h2>
-                                        <p className="text-lg text-[#717171] leading-relaxed font-medium">
+                                        <p className="text-lg text-[#717171] leading-relaxed font-medium whitespace-pre-line">
                                             {trip.overview || `Experience an unforgettable journey through ${trip.region}. This carefully curated itinerary ensures you see the best sights while enjoying comfortable accommodations and seamless transfers.`}
                                         </p>
                                     </div>
@@ -280,39 +280,45 @@ export default function TripDetailPage({ params }: { params: any }) {
                                 </div>
                             )}
 
-                            {activeTab === 'inclusions' && (
-                                <div className="grid md:grid-cols-2 gap-10 py-4">
-                                    <div className="space-y-6">
-                                        <h3 className="text-xl font-bold text-[#222222] flex items-center space-x-3">
-                                            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                                                <Check className="w-5 h-5 text-[#006A4E]" />
-                                            </div>
-                                            <span>Inclusions</span>
-                                        </h3>
-                                        <div className="space-y-3">
-                                            {inclusions.map((item: string, idx: number) => (
-                                                <div key={idx} className="flex items-center space-x-3 text-[#222222] font-medium text-sm">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#006A4E]" />
-                                                    <span>{item}</span>
+                            {activeTab === 'policies' && (
+                                <div className="space-y-10 py-4">
+                                    {inclusions.length > 0 && (
+                                        <div className="space-y-6">
+                                            <h3 className="text-xl font-bold text-[#222222] flex items-center space-x-3">
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                                                    <Check className="w-5 h-5 text-[#006A4E]" />
                                                 </div>
-                                            ))}
+                                                <span>Inclusions</span>
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {inclusions.map((item: string, idx: number) => (
+                                                    <div key={idx} className="flex items-start space-x-3 text-[#222222] font-medium text-sm">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-[#006A4E] mt-2 flex-shrink-0" />
+                                                        <span>{item}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                     <div className="space-y-6">
                                         <h3 className="text-xl font-bold text-[#222222] flex items-center space-x-3">
                                             <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
                                                 <Info className="w-5 h-5 text-[#717171]" />
                                             </div>
-                                            <span>Exclusions</span>
+                                            <span>Payment, Cancellation & Terms</span>
                                         </h3>
-                                        <div className="space-y-3">
-                                            {exclusions.map((item: string, idx: number) => (
-                                                <div key={idx} className="flex items-center space-x-3 text-[#717171] font-medium text-sm">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                                                    <span>{item}</span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        {exclusions.length > 0 ? (
+                                            <div className="space-y-3">
+                                                {exclusions.map((item: string, idx: number) => (
+                                                    <div key={idx} className="flex items-start space-x-3 text-[#717171] font-medium text-sm">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-300 mt-2 flex-shrink-0" />
+                                                        <span>{item}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-[#717171] font-medium text-sm">No policy details available for this package yet.</p>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -330,16 +336,16 @@ export default function TripDetailPage({ params }: { params: any }) {
                                                     <div className="space-y-4">
                                                         <h3 className="text-2xl font-bold text-[#222222]">{day.title}</h3>
                                                         <div className="p-8 rounded-3xl border border-[#EBEBEB] bg-white hover:shadow-airbnb transition-all space-y-6">
-                                                            <p className="text-[#717171] leading-relaxed font-medium text-lg">{day.description}</p>
-                                                            {day.activities?.length > 0 && (
-                                                                <div className="flex flex-wrap gap-3">
-                                                                    {day.activities.map((act: string, k: number) => (
-                                                                        <span key={k} className="px-3 py-1.5 bg-gray-50 text-[#222222] rounded-lg text-xs font-bold border border-gray-100 uppercase tracking-tighter">
-                                                                            {act}
-                                                                        </span>
+                                                            <div className="text-[#717171] leading-relaxed font-medium text-base space-y-4">
+                                                                {(day.description || '')
+                                                                    .split(/\n\n+/)
+                                                                    .filter(Boolean)
+                                                                    .map((paragraph: string, pIdx: number) => (
+                                                                        <p key={pIdx} className="whitespace-pre-line">
+                                                                            {paragraph.trim()}
+                                                                        </p>
                                                                     ))}
-                                                                </div>
-                                                            )}
+                                                            </div>
                                                             <div className="flex flex-wrap gap-8 pt-6 border-t border-[#EBEBEB]">
                                                                 {day.meals && (
                                                                     <div className="flex items-center space-x-2 text-xs font-black text-[#222222] uppercase tracking-widest">
@@ -363,14 +369,30 @@ export default function TripDetailPage({ params }: { params: any }) {
                                         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 rounded-3xl border-2 border-dashed border-[#EBEBEB] bg-gray-50">
                                             <FileText className="w-10 h-10 text-gray-200" />
                                             <h3 className="text-lg font-bold text-[#222222]">Itinerary Coming Soon</h3>
-                                            <p className="text-[#717171] font-medium text-sm max-w-xs">Day-by-day details are being added. View the full brochure PDF for now.</p>
-                                            {trip.pdfUrl && (
-                                                <button
-                                                    onClick={() => setActiveTab('brochure')}
-                                                    className="mt-2 px-5 py-2.5 bg-[#222222] text-white text-xs font-black rounded-xl uppercase tracking-widest hover:bg-black transition-all"
-                                                >
-                                                    View Brochure
-                                                </button>
+                                            <p className="text-[#717171] font-medium text-sm max-w-xs">
+                                                {trip.overview
+                                                    ? 'See the Overview tab for trip details, or view the brochure PDF.'
+                                                    : 'Day-by-day details are being added. View the full brochure PDF for now.'}
+                                            </p>
+                                            {(trip.pdfUrl || trip.overview) && (
+                                                <div className="flex gap-3 mt-2">
+                                                    {trip.overview && (
+                                                        <button
+                                                            onClick={() => setActiveTab('overview')}
+                                                            className="px-5 py-2.5 bg-[#222222] text-white text-xs font-black rounded-xl uppercase tracking-widest hover:bg-black transition-all"
+                                                        >
+                                                            View Overview
+                                                        </button>
+                                                    )}
+                                                    {trip.pdfUrl && (
+                                                        <button
+                                                            onClick={() => setActiveTab('brochure')}
+                                                            className="px-5 py-2.5 border border-[#222222] text-[#222222] text-xs font-black rounded-xl uppercase tracking-widest hover:bg-gray-100 transition-all"
+                                                        >
+                                                            View Brochure
+                                                        </button>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     )}
