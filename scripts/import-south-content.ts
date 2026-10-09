@@ -5,11 +5,13 @@ import { PDFParse } from 'pdf-parse';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '../db';
 import { trips, itineraryDays, tripItems } from '../db/schema';
+import { extractTripCodeFromFilename } from '../lib/extract-trip-code';
+import { parseItineraryPdfText } from '../lib/itinerary-pdf-parser';
+import type { ParsedSouthContent } from '../lib/south-pdf-parser';
 import {
-    extractTripCodeFromFilename,
-    parseSouthPdfText,
-    type ParsedSouthContent,
-} from '../lib/south-pdf-parser';
+    buildShortDescription,
+    sanitizeParsedContent,
+} from '../lib/sanitize-itinerary-text';
 
 const SOURCE_DIR = path.join(process.cwd(), 'SOUTH');
 const PUBLIC_DIR = path.join(process.cwd(), 'public', 'itineraries', 'SOUTH');
@@ -147,6 +149,7 @@ async function importTripContent(tripId: string, code: string, content: ParsedSo
         .update(trips)
         .set({
             overview: overviewParts.join(''),
+            shortDescription: buildShortDescription(content, code),
             highlights: content.highlights,
             pdfUrl,
             updatedAt: new Date(),
@@ -193,7 +196,7 @@ async function main() {
 
             const pdfUrl = `/itineraries/SOUTH/${entry.relativeDir}/${encodeURIComponent(entry.filename)}`.replace(/\\/g, '/');
             const text = await extractPdfText(entry.sourcePath);
-            const content = parseSouthPdfText(text);
+            const content = sanitizeParsedContent(parseItineraryPdfText(text), code);
 
             if (content.days.length === 0) {
                 console.log(`  ⚠ ${code}: no day content parsed from ${entry.filename}`);

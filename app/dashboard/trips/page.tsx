@@ -18,10 +18,12 @@ type Trip = {
     title: string;
     region: string;
     destination?: string;
-    destinations: string[];
+    destinations?: string[] | null;
     durationDays: number;
     durationNights: number;
     basePrice: string;
+    shortDescription?: string | null;
+    overview?: string | null;
     pdfUrl?: string | null;
     imageUrl?: string | null;
     tripPricing?: PricingTier[];
@@ -372,11 +374,22 @@ export default function TripsPage() {
                                 </div>
                                 <div className="p-4 space-y-1">
                                     <h3 className="font-bold text-[#222222] truncate text-base">{getDisplayTripTitle(trip.title).toUpperCase()}</h3>
+                                    {(trip.shortDescription || trip.overview) && (
+                                        <p className="text-[#717171] text-xs font-medium line-clamp-2 leading-snug">
+                                            {trip.shortDescription || trip.overview?.split('\n')[0]}
+                                        </p>
+                                    )}
                                     <div className="flex items-center text-[#717171] text-xs font-medium"><MapPin className="w-3 h-3 mr-1" />{trip.region}</div>
                                     <div className="flex items-center text-[#717171] text-xs font-medium"><Calendar className="w-3 h-3 mr-1" />{trip.durationDays}D / {trip.durationNights}N</div>
                                     <div className="pt-2">
-                                        <span className="text-[10px] font-bold text-[#717171] uppercase tracking-widest">From</span>
-                                        <p className="text-sm font-black text-[#222222]">₹{getStartingPrice(trip).toLocaleString()}/person</p>
+                                        {getStartingPrice(trip) > 0 ? (
+                                            <>
+                                                <span className="text-[10px] font-bold text-[#717171] uppercase tracking-widest">From</span>
+                                                <p className="text-sm font-black text-[#222222]">₹{getStartingPrice(trip).toLocaleString()}/person</p>
+                                            </>
+                                        ) : (
+                                            <p className="text-sm font-black text-[#222222]">Price on request</p>
+                                        )}
                                     </div>
                                 </div>
                             </Link>

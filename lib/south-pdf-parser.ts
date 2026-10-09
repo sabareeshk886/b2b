@@ -33,6 +33,15 @@ const SECTION_HEADERS = [
 const DAY_HEADER_RE = /^Day\s*(\d+)\s*(.*)$/i;
 const DURATION_RE = /\d+\s*DAY\s*\d+\s*NIGHT/i;
 const TAGLINE_RE = /LOT MORE THAN JUST TRAVELING/i;
+const SKIP_HEADER_LINE_RE =
+    /contact us|fernway|@|www\.|^\d{2,}[\s\d]*$|lot more than just traveling|^\d+\s*day\s*\d+\s*night/i;
+
+function isDestinationLine(line: string): boolean {
+    if (!line || line.length < 3 || line.length > 28) return false;
+    if (DURATION_RE.test(line) || TAGLINE_RE.test(line) || SKIP_HEADER_LINE_RE.test(line)) return false;
+    if (/[a-z]/.test(line)) return false;
+    return /^[A-Z][A-Z\s&'-]+$/.test(line);
+}
 
 function cleanBullet(line: string): string {
     return line.replace(/^[•\-*]\s*/, '').replace(/\s+/g, ' ').trim();
@@ -123,9 +132,7 @@ export function parseSouthPdfText(text: string): ParsedSouthContent {
     const dayStartIdx = lines.findIndex((line) => DAY_HEADER_RE.test(line));
 
     const headerLines = dayStartIdx >= 0 ? lines.slice(0, dayStartIdx) : lines;
-    const destinations = headerLines.filter(
-        (line) => !DURATION_RE.test(line) && !TAGLINE_RE.test(line) && line.length > 1
-    );
+    const destinations = headerLines.filter(isDestinationLine);
     const durationLine = headerLines.find((line) => DURATION_RE.test(line)) || '';
     const tagline = headerLines.find((line) => TAGLINE_RE.test(line)) || 'Lot more than just traveling';
 
@@ -208,13 +215,4 @@ export function parseSouthPdfText(text: string): ParsedSouthContent {
     };
 }
 
-export function extractTripCodeFromFilename(filename: string): string | null {
-    const base = filename.replace(/\.pdf$/i, '');
-    const variantMatch = base.match(/^(FWS\d{3})\s*\(([A-Z])\)/i);
-    if (variantMatch) {
-        return `${variantMatch[1].toUpperCase()}${variantMatch[2].toUpperCase()}`;
-    }
-
-    const codeMatch = base.match(/^(FWS\d{3})/i);
-    return codeMatch ? codeMatch[1].toUpperCase() : null;
-}
+export { extractTripCodeFromFilename } from './extract-trip-code';

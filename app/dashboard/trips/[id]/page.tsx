@@ -16,12 +16,10 @@ import {
     Calendar,
     Clock,
 } from 'lucide-react';
-import { db } from '@/db';
-import { trips, itineraryDays, tripItems, tripPricing } from '@/db/schema';
-import { eq, asc } from 'drizzle-orm';
 import Link from 'next/link';
 import { createQuote } from '@/app/actions/quotes';
 import { toast } from 'sonner';
+import { QuotePdfDownload } from '@/components/QuotePdfDownload';
 
 export default function TripDetailPage({ params }: { params: any }) {
     const [trip, setTrip] = useState<any>(null);
@@ -555,13 +553,27 @@ export default function TripDetailPage({ params }: { params: any }) {
                                         <span>Create Quote</span>
                                     </button>
                                 </Link>
+
+                                <QuotePdfDownload
+                                    tripId={trip.id}
+                                    trip={trip}
+                                    customerName={customerName}
+                                    travelDate={travelDate}
+                                    numPax={numPax}
+                                    pricePerPerson={
+                                        isPriceAvailable
+                                            ? Math.round(clientPrice / numPax)
+                                            : yourMargin
+                                    }
+                                />
+
                                 {trip.pdfUrl && (
                                     <button 
                                         onClick={() => window.open(trip.pdfUrl!, '_blank')}
-                                        className="w-full h-14 border border-[#222222] text-[#222222] rounded-xl font-black text-sm uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center space-x-3"
+                                        className="w-full h-12 border border-[#EBEBEB] text-[#717171] rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center space-x-2"
                                     >
-                                        <Download className="w-5 h-5" />
-                                        <span>Download PDF</span>
+                                        <Download className="w-4 h-4" />
+                                        <span>Fernway Brochure (PDF)</span>
                                     </button>
                                 )}
                             </div>

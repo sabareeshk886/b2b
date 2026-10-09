@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { createQuote } from '@/app/actions/quotes';
 import { toast } from 'sonner';
+import { QuotePdfDownload } from '@/components/QuotePdfDownload';
 
 function NewQuoteForm() {
     const searchParams = useSearchParams();
@@ -436,7 +437,7 @@ function NewQuoteForm() {
                                     <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
                                         <div className="flex justify-between items-center">
                                             <span className="text-xs font-bold text-[#717171] uppercase">Base B2B Price</span>
-                                            <span className="text-lg font-black text-[#222222]">₹{ppp.toLocaleString()}</span>
+                                            <span className="text-lg font-black text-[#222222]">{ppp > 0 ? `₹${ppp.toLocaleString()}` : 'On request'}</span>
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-center">
@@ -484,6 +485,18 @@ function NewQuoteForm() {
                                     )}
                                     <span>{isSaving ? 'Saving Quote...' : 'Confirm & Share Quote'}</span>
                                 </button>
+
+                                {selectedTrip && (
+                                    <QuotePdfDownload
+                                        tripId={selectedTrip.id}
+                                        trip={selectedTrip}
+                                        customerName={customerName}
+                                        travelDate={travelDate}
+                                        numPax={numPax}
+                                        pricePerPerson={Math.round(clientPricePerPerson)}
+                                        compact
+                                    />
+                                )}
                             </div>
                             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                         </div>

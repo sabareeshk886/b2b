@@ -10,7 +10,9 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:import-south": "npx tsx scripts/import-south-content.ts"
+    "db:import-south": "npx tsx scripts/import-south-content.ts",
+    "data:extract-itineraries": "npx tsx scripts/extract-itineraries-to-json.ts",
+    "data:import-trip-content": "npx tsx scripts/import-trip-content-from-data.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.0",

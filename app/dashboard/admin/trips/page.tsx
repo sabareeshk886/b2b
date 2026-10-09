@@ -9,11 +9,11 @@ type Trip = {
     code: string;
     title: string;
     region: string;
-    destinations: string[];
+    destinations?: string[] | null;
     durationDays: number;
     durationNights: number;
     isActive: boolean;
-    featured: boolean;
+    featured?: boolean | null;
     pdfUrl?: string | null;
 };
 
@@ -31,28 +31,38 @@ export default function AdminTripsPage() {
         try {
             const response = await fetch('/api/trips');
             const data = await response.json();
+            if (!response.ok) {
+                console.error('Error fetching trips:', data.error || response.statusText);
+                setTrips([]);
+                return;
+            }
             setTrips(data.trips || []);
         } catch (error) {
             console.error('Error fetching trips:', error);
+            setTrips([]);
         } finally {
             setLoading(false);
         }
     };
 
+    const getDestinations = (trip: Trip) => trip.destinations ?? [];
+
     const filteredTrips = trips.filter((trip) => {
         const matchesRegion = regionFilter === 'ALL' || trip.region === regionFilter;
+        const destinations = getDestinations(trip);
         const matchesSearch = searchQuery === '' ||
             trip.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
             trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            trip.destinations.some(d => d.toLowerCase().includes(searchQuery.toLowerCase()));
+            destinations.some((d) => d.toLowerCase().includes(searchQuery.toLowerCase()));
         return matchesRegion && matchesSearch;
     });
 
     const stats = {
         total: trips.length,
-        north: trips.filter(t => t.region === 'NORTH').length,
-        rajasthan: trips.filter(t => t.region === 'RAJASTHAN').length,
-        mumbai: trips.filter(t => t.region === 'MUMBAI').length,
+        north: trips.filter((t) => t.region === 'NORTH').length,
+        rajasthan: trips.filter((t) => t.region === 'RAJASTHAN').length,
+        mumbai: trips.filter((t) => t.region === 'MUMBAI').length,
+        south: trips.filter((t) => t.region === 'SOUTH').length,
     };
 
     return (
@@ -104,6 +114,11 @@ export default function AdminTripsPage() {
                             <span className="text-[10px] font-black text-[#717171] uppercase tracking-tighter text-orange-500">Rajasthan</span>
                             <span className="text-lg font-black text-[#222222] leading-none">{stats.rajasthan}</span>
                         </div>
+                        <div className="w-px h-6 bg-[#EBEBEB]" />
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-[#717171] uppercase tracking-tighter text-emerald-600">South</span>
+                            <span className="text-lg font-black text-[#222222] leading-none">{stats.south}</span>
+                        </div>
                         <button className="flex items-center space-x-2 text-xs font-black text-[#222222] uppercase tracking-[0.2em] ml-4 hover:opacity-70 transition-opacity">
                             <Filter className="w-4 h-4" />
                             <span>Filter</span>
@@ -142,7 +157,14 @@ export default function AdminTripsPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredTrips.map((trip) => (
+                                filteredTrips.map((trip) => {
+                                    const destinations = getDestinations(trip);
+                                    const destinationLabel =
+                                        destinations.length > 0
+                                            ? `${destinations.slice(0, 2).join(', ')}${destinations.length > 2 ? '...' : ''}`
+                                            : trip.title;
+
+                                    return (
                                     <tr key={trip.id} className="hover:bg-gray-50/50 transition-colors group">
                                         <td className="px-8 py-6">
                                             <span className="font-black text-[#222222] text-sm tracking-tight">{trip.code}</span>
@@ -157,7 +179,7 @@ export default function AdminTripsPage() {
                                                 </Link>
                                                 <div className="flex items-center space-x-2 text-[10px] text-[#717171] font-black uppercase tracking-tighter">
                                                     <MapPin className="w-3 h-3 text-[#006A4E]" />
-                                                    <span>{trip.durationDays}D / {trip.durationNights}N • {trip.destinations.slice(0, 2).join(', ')}{trip.destinations.length > 2 && '...'}</span>
+                                                    <span>{trip.durationDays}D / {trip.durationNights}N • {destinationLabel}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -189,9 +211,9 @@ export default function AdminTripsPage() {
                                                     </a>
                                                 )}
                                                 <Link
-                                                    href={`/dashboard/admin/trips/${trip.id}/edit`}
+                                                    href={`/dashboard/trips/${trip.id}`}
                                                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-[#222222]"
-                                                    title="Edit"
+                                                    title="View / quote"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </Link>
@@ -202,7 +224,8 @@ export default function AdminTripsPage() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
