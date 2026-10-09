@@ -196,8 +196,8 @@ export default async function HomePage() {
                         </div>
                         <div className="flex items-center space-x-6 text-sm font-light text-[#717171]">
                             <Link href="#" className="hover:underline">&copy; 2026 Fernway Inc.</Link>
-                            <Link href="#" className="hover:underline">Privacy</Link>
-                            <Link href="#" className="hover:underline">Terms</Link>
+                            <Link href="/privacy" className="hover:underline">Privacy</Link>
+                            <Link href="/terms" className="hover:underline">Terms</Link>
                             <Link href="#" className="hover:underline">Sitemap</Link>
                         </div>
                     </div>
