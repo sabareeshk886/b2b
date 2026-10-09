@@ -11,8 +11,7 @@ export default function QuotesPage() {
 
     useEffect(() => {
         async function loadQuotes() {
-            const companyName = localStorage.getItem('companyName') || 'g holidays';
-            const data = await getQuotes(companyName);
+            const data = await getQuotes();
             setQuotes(data);
             setLoading(false);
         }

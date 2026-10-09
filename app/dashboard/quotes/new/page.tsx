@@ -17,9 +17,11 @@ import {
 } from 'lucide-react';
 import { createQuote } from '@/app/actions/quotes';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 import { QuotePdfDownload } from '@/components/QuotePdfDownload';
 
 function NewQuoteForm() {
+    const { data: session } = useSession();
     const searchParams = useSearchParams();
     const router = useRouter();
     const tripIdFromQuery = searchParams.get('tripId');
@@ -193,7 +195,7 @@ function NewQuoteForm() {
         }
 
         setIsSaving(true);
-        const companyName = typeof window !== 'undefined' ? localStorage.getItem('companyName') || 'g holidays' : 'g holidays';
+        const companyName = session?.user.companyName ?? '';
         
         try {
             const result = await createQuote({
@@ -204,7 +206,6 @@ function NewQuoteForm() {
                 travelDate,
                 basePrice: ppp,
                 finalPrice: clientPricePerPerson,
-                companyName: companyName
             });
 
             if (result.error) {

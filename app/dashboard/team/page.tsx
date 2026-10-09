@@ -4,28 +4,23 @@ import { Users, Mail, Phone, Shield, Plus, Loader2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { getTeamMembers } from '../../actions/team';
 import AddMemberModal from '../../../components/AddMemberModal';
+import { useSession } from 'next-auth/react';
 
 export default function TeamPage() {
-    const [adminName, setAdminName] = useState('Sabareesh');
-    const [companyName, setCompanyName] = useState('g holidays');
+    const { data: session } = useSession();
+    const isAdmin = session?.user.role === 'admin';
     const [members, setMembers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const loadMembers = useCallback(async () => {
         setIsLoading(true);
-        const data = await getTeamMembers(companyName);
+        const data = await getTeamMembers();
         setMembers(data);
         setIsLoading(false);
-    }, [companyName]);
+    }, []);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('userName');
-        const storedCompany = localStorage.getItem('companyName');
-        
-        if (storedUser) setAdminName(storedUser);
-        if (storedCompany) setCompanyName(storedCompany);
-        
         loadMembers();
     }, [loadMembers]);
 
@@ -43,13 +38,15 @@ export default function TeamPage() {
                     <h1 className="text-3xl font-bold text-[#222222] mb-1">Team Members</h1>
                     <p className="text-[#717171] font-medium">Manage your team and their system access</p>
                 </div>
-                <button 
-                    onClick={() => setIsModalOpen(true)}
-                    className="px-8 py-3.5 bg-[#222222] text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95 flex items-center space-x-2"
-                >
-                    <Plus className="w-5 h-5 font-bold" />
-                    <span>Add Member</span>
-                </button>
+                {isAdmin && (
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-8 py-3.5 bg-[#222222] text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95 flex items-center space-x-2"
+                    >
+                        <Plus className="w-5 h-5 font-bold" />
+                        <span>Add Member</span>
+                    </button>
+                )}
             </div>
 
             {/* Stats */}
@@ -121,7 +118,6 @@ export default function TeamPage() {
             <AddMemberModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                companyName={companyName}
                 onSuccess={loadMembers}
             />
         </div>

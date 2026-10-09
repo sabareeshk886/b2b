@@ -4,34 +4,26 @@ import { db } from '../../db';
 import { users, companies } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { getSessionUser } from '@/lib/session';
 
 /**
- * Fetches all team members for a given company.
- * In a real app, the companyId would come from the verified session.
- * For this demo, we can pass it or fallback to the first company.
+ * Fetches all team members of the signed-in user's company.
  */
-export async function getTeamMembers(companyNameFallback?: string) {
+export async function getTeamMembers() {
     try {
-        let companyId: string | undefined;
+        const user = await getSessionUser();
+        if (!user) return [];
 
-        if (companyNameFallback) {
-            const [company] = await db.select().from(companies).where(eq(companies.name, companyNameFallback)).limit(1);
-            if (company) companyId = company.id;
-        }
-
-        // Fallback to the first company if not found (for demo purposes)
-        if (!companyId) {
-            const allCompanies = await db.select().from(companies).limit(1);
-            if (allCompanies.length > 0) {
-                companyId = allCompanies[0].id;
-            }
-        }
-
-        if (!companyId) return [];
-
-        const teamMembers = await db.select()
+        const teamMembers = await db.select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            role: users.role,
+            isActive: users.isActive,
+            createdAt: users.createdAt,
+        })
             .from(users)
-            .where(eq(users.companyId, companyId))
+            .where(eq(users.companyId, user.companyId))
             .orderBy(desc(users.createdAt));
 
         return teamMembers;
@@ -49,24 +41,15 @@ export async function addTeamMember(data: {
     email: string;
     phone: string;
     role: 'admin' | 'manager' | 'user';
-    companyName: string;
 }) {
     try {
-        // Find company by name (as a demo shortcut)
-        let [company] = await db.select().from(companies).where(eq(companies.name, data.companyName)).limit(1);
-        
-        // Fallback to first company if not found
-        if (!company) {
-            const allCompanies = await db.select().from(companies).limit(1);
-            company = allCompanies[0];
-        }
-
-        if (!company) {
-            return { error: 'Company not found' };
+        const user = await getSessionUser();
+        if (!user || user.role !== 'admin') {
+            return { error: 'Only company admins can add team members' };
         }
 
         // Check if user already exists
-        const [existingUser] = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
+        const [existingUser] = await db.select().from(users).where(eq(users.email, data.email.trim().toLowerCase())).limit(1);
         if (existingUser) {
             return { error: 'User with this email already exists' };
         }
@@ -74,9 +57,9 @@ export async function addTeamMember(data: {
         // Insert new user
         // Note: For a real app, we'd send an invite email or set a temp password
         await db.insert(users).values({
-            companyId: company.id,
+            companyId: user.companyId,
             name: data.name,
-            email: data.email,
+            email: data.email.trim().toLowerCase(),
             passwordHash: 'invited_user_placeholder', // Should be handled by an invitation flow
             role: data.role,
             isActive: true,
@@ -91,18 +74,14 @@ export async function addTeamMember(data: {
 }
 
 /**
- * Fetches company details.
+ * Fetches the signed-in user's company details.
  */
-export async function getCompanyDetails(companyName: string) {
+export async function getCompanyDetails() {
     try {
-        const [company] = await db.select().from(companies).where(eq(companies.name, companyName)).limit(1);
-        
-        // Fallback to first company for demo
-        if (!company) {
-            const allCompanies = await db.select().from(companies).limit(1);
-            return allCompanies[0] || null;
-        }
+        const user = await getSessionUser();
+        if (!user) return null;
 
+        const [company] = await db.select().from(companies).where(eq(companies.id, user.companyId)).limit(1);
         return company || null;
     } catch (error) {
         console.error('Error fetching company details:', error);
@@ -111,10 +90,9 @@ export async function getCompanyDetails(companyName: string) {
 }
 
 /**
- * Updates company details.
+ * Updates the signed-in user's company details.
  */
 export async function updateCompanyDetails(data: {
-    id: string;
     name: string;
     email: string;
     phone: string;
@@ -122,6 +100,11 @@ export async function updateCompanyDetails(data: {
     logoUrl?: string | null;
 }) {
     try {
+        const user = await getSessionUser();
+        if (!user || user.role !== 'admin') {
+            return { error: 'Only company admins can update the profile' };
+        }
+
         await db.update(companies)
             .set({
                 name: data.name,
@@ -131,7 +114,7 @@ export async function updateCompanyDetails(data: {
                 logoUrl: data.logoUrl,
                 updatedAt: new Date(),
             })
-            .where(eq(companies.id, data.id));
+            .where(eq(companies.id, user.companyId));
 
         revalidatePath('/dashboard/settings');
         revalidatePath('/dashboard/layout'); // To update branding in sidebar/header

@@ -1,9 +1,10 @@
 'use server';
 
 import { db } from '../../db';
-import { quotes, companies, trips } from '../../db/schema';
+import { quotes, trips } from '../../db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { getSessionUser } from '@/lib/session';
 
 export async function createQuote(data: {
     customerName: string;
@@ -13,24 +14,16 @@ export async function createQuote(data: {
     travelDate: string;
     basePrice: number;
     finalPrice: number;
-    companyName: string;
     status?: 'draft' | 'sent' | 'confirmed' | 'cancelled';
 }) {
     try {
-        // Find company by name (demo shortcut)
-        let [company] = await db.select().from(companies).where(eq(companies.name, data.companyName)).limit(1);
-        
-        if (!company) {
-            const allCompanies = await db.select().from(companies).limit(1);
-            company = allCompanies[0];
-        }
-
-        if (!company) {
-            return { error: 'Company not found' };
+        const user = await getSessionUser();
+        if (!user) {
+            return { error: 'You must be signed in to create a quote' };
         }
 
         const [newQuote] = await db.insert(quotes).values({
-            companyId: company.id,
+            companyId: user.companyId,
             customerName: data.customerName,
             customerPhone: data.customerPhone,
             selectedTrips: [{ tripId: data.tripId, travelers: data.pax, travelDate: data.travelDate }],
@@ -49,16 +42,10 @@ export async function createQuote(data: {
     }
 }
 
-export async function getQuotes(companyName: string) {
+export async function getQuotes() {
     try {
-        let [company] = await db.select().from(companies).where(eq(companies.name, companyName)).limit(1);
-        
-        if (!company) {
-            const allCompanies = await db.select().from(companies).limit(1);
-            company = allCompanies[0];
-        }
-
-        if (!company) return [];
+        const user = await getSessionUser();
+        if (!user) return [];
 
         const allQuotes = await db.select({
             id: quotes.id,
@@ -75,7 +62,7 @@ export async function getQuotes(companyName: string) {
         })
             .from(quotes)
             .leftJoin(trips, sql`${quotes.selectedTrips}->0->>'tripId' = ${trips.id}::text`)
-            .where(eq(quotes.companyId, company.id))
+            .where(eq(quotes.companyId, user.companyId))
             .orderBy(desc(quotes.createdAt));
 
         return allQuotes as any[];

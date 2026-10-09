@@ -7,7 +7,8 @@ import bcrypt from 'bcryptjs';
 
 export async function registerCompany(formData: any) {
     try {
-        const { companyName, companyEmail, companyPhone, address, licenseNumber, gstNumber, userName, password } = formData;
+        const { companyName, companyPhone, address, licenseNumber, gstNumber, userName, password } = formData;
+        const companyEmail = typeof formData.companyEmail === 'string' ? formData.companyEmail.trim().toLowerCase() : '';
 
         if (!companyName || !companyEmail || !userName || !password) {
             return { error: 'Missing required fields' };

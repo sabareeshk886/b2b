@@ -19,9 +19,11 @@ import {
 import Link from 'next/link';
 import { createQuote } from '@/app/actions/quotes';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 import { QuotePdfDownload } from '@/components/QuotePdfDownload';
 
 export default function TripDetailPage({ params }: { params: any }) {
+    const { data: session } = useSession();
     const [trip, setTrip] = useState<any>(null);
     const [activeTab, setActiveTab] = useState('itinerary');
     const [numPax, setNumPax] = useState(2);
@@ -87,7 +89,7 @@ export default function TripDetailPage({ params }: { params: any }) {
         }
 
         setIsSaving(true);
-        const companyName = typeof window !== 'undefined' ? localStorage.getItem('companyName') || 'g holidays' : 'g holidays';
+        const companyName = session?.user.companyName ?? '';
         
         try {
             // 1. Save Quote to DB
@@ -99,7 +101,6 @@ export default function TripDetailPage({ params }: { params: any }) {
                 travelDate,
                 basePrice: ppp,
                 finalPrice: clientPrice / numPax,
-                companyName: companyName
             });
 
             if (result.error) {

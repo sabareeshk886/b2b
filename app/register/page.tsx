@@ -45,11 +45,7 @@ export default function RegisterPage() {
                 return;
             }
             
-            // Set localStorage for client demo compatibility
-            localStorage.setItem('companyName', formData.companyName || 'My Travel Company');
-            localStorage.setItem('userName', formData.userName || 'Admin User');
-            
-            window.location.href = '/dashboard';
+            window.location.href = '/login?registered=1';
         } catch (err: any) {
             setErrorMsg('Failed to register');
             setIsLoading(false);

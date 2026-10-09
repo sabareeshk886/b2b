@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react';
 import { Building2, User, Bell, Lock, CreditCard, Globe, Camera, Trash2, Loader2 } from 'lucide-react';
 import { getCompanyDetails, updateCompanyDetails } from '../../actions/team';
+import { useSession } from 'next-auth/react';
 
 export default function SettingsPage() {
+    const { update: updateSession } = useSession();
     const [companyId, setCompanyId] = useState<string | null>(null);
-    const [companyName, setCompanyName] = useState('g holidays');
-    const [companyEmail, setCompanyEmail] = useState('admin@gmail.com');
-    const [phone, setPhone] = useState('+91 98765 43210');
-    const [address, setAddress] = useState('123 Travel Street, Mumbai, India');
+    const [companyName, setCompanyName] = useState('');
+    const [companyEmail, setCompanyEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -54,7 +56,6 @@ export default function SettingsPage() {
         setIsSaving(true);
         try {
             const result = await updateCompanyDetails({
-                id: companyId,
                 name: companyName,
                 email: companyEmail,
                 phone: phone,
@@ -63,9 +64,8 @@ export default function SettingsPage() {
             });
 
             if (result.success) {
-                // Update local storage for immediate header update if name changed
-                localStorage.setItem('companyName', companyName);
-                localStorage.setItem('companyEmail', companyEmail);
+                // Refresh the session so the header shows the new name
+                await updateSession({ companyName });
                 setCompanyEmail(companyEmail);
                 setIsEditing(false);
                 alert('Profile updated successfully!');
@@ -82,8 +82,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         async function fetchDetails() {
-            const storedCompany = localStorage.getItem('companyName') || 'g holidays';
-            const details = await getCompanyDetails(storedCompany);
+            const details = await getCompanyDetails();
             
             if (details) {
                 setCompanyId(details.id);

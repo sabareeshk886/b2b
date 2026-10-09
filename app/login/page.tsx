@@ -1,23 +1,61 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { Globe, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { Globe, Mail, Lock, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
+
+// Only allow same-origin redirects after login (middleware passes an absolute URL)
+function safeCallbackUrl(value: string | null) {
+    if (!value) return '/dashboard';
+    try {
+        const url = new URL(value, window.location.origin);
+        return url.origin === window.location.origin ? url.pathname + url.search + url.hash : '/dashboard';
+    } catch {
+        return '/dashboard';
+    }
+}
 
 export default function LoginPage() {
+    return (
+        <Suspense>
+            <LoginForm />
+        </Suspense>
+    );
+}
+
+function LoginForm() {
+    const searchParams = useSearchParams();
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const justRegistered = searchParams.get('registered') === '1';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Login:', { email, password });
-        
-        localStorage.setItem('companyName', 'g holidays');
-        localStorage.setItem('userName', email || 'Sabareesh');
-        
-        // Redirect to dashboard for demo
-        window.location.href = '/dashboard';
+        setIsLoading(true);
+        setErrorMsg('');
+
+        try {
+            const res = await signIn('credentials', { email, password, redirect: false });
+            if (!res || res.error) {
+                setErrorMsg(
+                    res?.code === 'inactive'
+                        ? 'This account is inactive. Please contact your company admin.'
+                        : 'Invalid email or password.'
+                );
+                setIsLoading(false);
+                return;
+            }
+            // Full navigation so the server layout picks up the new session cookie
+            window.location.href = safeCallbackUrl(searchParams.get('callbackUrl'));
+        } catch {
+            setErrorMsg('Unable to sign in right now. Please try again.');
+            setIsLoading(false);
+        }
     };
 
 
@@ -35,6 +73,17 @@ export default function LoginPage() {
 
                     <h1 className="text-4xl font-bold mb-2 text-gray-800">Welcome Back!</h1>
                     <p className="text-gray-600 mb-8">Sign in to access your B2B portal</p>
+
+                    {justRegistered && !errorMsg && (
+                        <div className="mb-6 p-4 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-medium">
+                            Registration successful. Sign in with your company email and password.
+                        </div>
+                    )}
+                    {errorMsg && (
+                        <div role="alert" className="mb-6 p-4 rounded-xl bg-red-50 text-red-600 text-sm font-medium">
+                            {errorMsg}
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
@@ -91,10 +140,10 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            className="w-full gradient-primary text-white py-3.5 rounded-xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center text-lg"
+                            disabled={isLoading}
+                            className="w-full gradient-primary text-white py-3.5 rounded-xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center text-lg disabled:opacity-70 disabled:hover:scale-100"
                         >
-                            Sign In
-                            <ArrowRight className="ml-2 w-5 h-5" />
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sign In<ArrowRight className="ml-2 w-5 h-5" /></>}
                         </button>
 
                     </form>

@@ -44,11 +44,7 @@ export function QuotePdfDownload({
                 trip = data.trip;
             }
 
-            const companyName =
-                typeof window !== 'undefined'
-                    ? localStorage.getItem('companyName') || 'g holidays'
-                    : 'g holidays';
-            const company = await getCompanyDetails(companyName);
+            const company = await getCompanyDetails();
 
             if (!company) {
                 toast.error('Company profile not found. Update Settings first.');

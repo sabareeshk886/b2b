@@ -8,11 +8,10 @@ import { addTeamMember } from '../app/actions/team';
 interface AddMemberModalProps {
     isOpen: boolean;
     onClose: () => void;
-    companyName: string;
     onSuccess: () => void;
 }
 
-export default function AddMemberModal({ isOpen, onClose, companyName, onSuccess }: AddMemberModalProps) {
+export default function AddMemberModal({ isOpen, onClose, onSuccess }: AddMemberModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +26,6 @@ export default function AddMemberModal({ isOpen, onClose, companyName, onSuccess
             email: formData.get('email') as string,
             phone: formData.get('phone') as string,
             role: formData.get('role') as 'admin' | 'manager' | 'user',
-            companyName: companyName,
         };
 
         const result = await addTeamMember(data);

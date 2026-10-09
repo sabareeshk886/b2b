@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/db';
 import { trips, itineraryDays, tripPricing, tripItems } from '@/db/schema';
 
@@ -20,6 +21,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const user = await getSessionUser();
+    if (!user || user.role !== 'admin') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: user ? 403 : 401 });
+    }
+
     try {
         const body = await request.json();
         const {
