@@ -32,6 +32,12 @@ export default function Hero() {
                                 Browse Catalog
                             </Link>
                         </div>
+                        <p className="mt-6 text-sm text-[#717171]">
+                            Already a partner?{' '}
+                            <Link href="/login" className="font-semibold text-[#006A4E] hover:underline">
+                                Log in
+                            </Link>
+                        </p>
                     </div>
                     
                     <div className="relative w-full md:w-1/2 aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl">

@@ -41,16 +41,16 @@ export default function Navbar() {
                 </div>
 
                 {/* Right Side Actions */}
-                <div className="flex items-center space-x-4">
-                    <Link href="/register" className="hidden lg:block text-sm font-semibold hover:bg-gray-50 px-4 py-3 rounded-full transition-colors">
-                        B2B Partner Program
+                <div className="flex items-center space-x-3">
+                    <Link href="/login" className="hidden sm:block text-sm font-semibold text-[#222222] border border-gray-300 hover:border-[#006A4E] hover:text-[#006A4E] px-5 py-2.5 rounded-full transition-colors">
+                        Log in
                     </Link>
-                    <button className="p-3 hover:bg-gray-50 rounded-full transition-colors hidden sm:block">
-                        <Globe className="w-5 h-5" />
-                    </button>
-                    
-                    {/* Profile Button + Dropdown */}
-                    <div className="relative" ref={menuRef}>
+                    <Link href="/register" className="hidden sm:block text-sm font-semibold text-white bg-[#006A4E] hover:bg-[#00563F] px-5 py-2.5 rounded-full transition-colors">
+                        Join as Partner
+                    </Link>
+
+                    {/* Mobile menu */}
+                    <div className="relative sm:hidden" ref={menuRef}>
                         <button
                             onClick={() => setMenuOpen(!menuOpen)}
                             className="flex items-center border border-gray-200 rounded-full p-2 space-x-2 hover:shadow-md transition-shadow cursor-pointer"
@@ -76,7 +76,7 @@ export default function Navbar() {
                                     onClick={() => setMenuOpen(false)}
                                     className="block px-5 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                                 >
-                                    Sign up
+                                    Join as Partner
                                 </Link>
 
                             </div>
