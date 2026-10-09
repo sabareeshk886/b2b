@@ -1,15 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Globe, Mail, Lock, Building2, Phone, MapPin, FileText, ArrowRight, Eye, EyeOff, User } from 'lucide-react';
-import { registerCompany } from '../actions/auth';
+import { checkRegistrationAvailability, registerCompany } from '../actions/auth';
+
+type DuplicateField = 'companyEmail' | 'companyPhone';
 
 export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [errorField, setErrorField] = useState<DuplicateField | null>(null);
+    const formRef = useRef<HTMLFormElement>(null);
     const [formData, setFormData] = useState({
         companyName: '',
         companyEmail: '',
@@ -24,12 +29,45 @@ export default function RegisterPage() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+        // Editing the field that was flagged clears the error
+        if (e.target.name === errorField) {
+            setErrorMsg('');
+            setErrorField(null);
+        }
+    };
+
+    const showDuplicate = (error: string, field?: DuplicateField) => {
+        setErrorMsg(error);
+        setErrorField(field ?? null);
+        if (field) setStep(1);
+    };
+
+    const handleContinue = async () => {
+        // Native validation for the step-1 required fields (Continue is not a submit button)
+        if (formRef.current && !formRef.current.reportValidity()) return;
+
+        setIsChecking(true);
+        setErrorMsg('');
+        setErrorField(null);
+        try {
+            const res = await checkRegistrationAvailability(formData.companyEmail, formData.companyPhone);
+            if (res.error) {
+                showDuplicate(res.error, res.field);
+                return;
+            }
+            setStep(2);
+        } catch {
+            setErrorMsg('Could not verify your details. Please try again.');
+        } finally {
+            setIsChecking(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setErrorMsg('');
+        setErrorField(null);
 
         if (formData.password !== formData.confirmPassword) {
             setErrorMsg('Passwords do not match');
@@ -40,7 +78,7 @@ export default function RegisterPage() {
         try {
             const res = await registerCompany(formData);
             if (res.error) {
-                setErrorMsg(res.error);
+                showDuplicate(res.error, 'field' in res ? res.field : undefined);
                 setIsLoading(false);
                 return;
             }
@@ -96,10 +134,16 @@ export default function RegisterPage() {
                     {errorMsg && (
                         <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium">
                             {errorMsg}
+                            {errorField && (
+                                <>
+                                    {' '}
+                                    <Link href="/login" className="underline font-semibold">Go to login</Link>
+                                </>
+                            )}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit}>
+                    <form ref={formRef} onSubmit={handleSubmit}>
                         {step === 1 ? (
                             <>
                                 <div className="space-y-6">
@@ -133,7 +177,8 @@ export default function RegisterPage() {
                                                     name="companyEmail"
                                                     value={formData.companyEmail}
                                                     onChange={handleChange}
-                                                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                                    aria-invalid={errorField === 'companyEmail'}
+                                                    className={`w-full pl-12 pr-4 py-3.5 border-2 ${errorField === 'companyEmail' ? 'border-red-400' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all`}
                                                     placeholder="info@company.com"
                                                     required
                                                 />
@@ -151,7 +196,8 @@ export default function RegisterPage() {
                                                     name="companyPhone"
                                                     value={formData.companyPhone}
                                                     onChange={handleChange}
-                                                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                                    aria-invalid={errorField === 'companyPhone'}
+                                                    className={`w-full pl-12 pr-4 py-3.5 border-2 ${errorField === 'companyPhone' ? 'border-red-400' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all`}
                                                     placeholder="+91 98765 43210"
                                                     required
                                                 />
@@ -215,11 +261,12 @@ export default function RegisterPage() {
 
                                 <button
                                     type="button"
-                                    onClick={() => setStep(2)}
-                                    className="w-full mt-8 gradient-primary text-white py-3.5 rounded-xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center text-lg"
+                                    onClick={handleContinue}
+                                    disabled={isChecking}
+                                    className="w-full mt-8 gradient-primary text-white py-3.5 rounded-xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center text-lg disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
-                                    Continue
-                                    <ArrowRight className="ml-2 w-5 h-5" />
+                                    {isChecking ? 'Checking...' : 'Continue'}
+                                    {!isChecking && <ArrowRight className="ml-2 w-5 h-5" />}
                                 </button>
                             </>
                         ) : (
@@ -291,8 +338,8 @@ export default function RegisterPage() {
                                     <div className="flex items-start">
                                         <input type="checkbox" className="w-4 h-4 mt-1 text-blue-600 border-gray-300 rounded focus:ring-blue-500" required />
                                         <span className="ml-2 text-sm text-gray-600">
-                                            I agree to the <Link href="/terms" className="text-blue-600 hover:text-blue-700 font-semibold">Terms of Service</Link>{' '}
-                                            and <Link href="/privacy" className="text-blue-600 hover:text-blue-700 font-semibold">Privacy Policy</Link>
+                                            I agree to the <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 font-semibold">Terms of Service</Link>{' '}
+                                            and <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 font-semibold">Privacy Policy</Link>
                                         </span>
                                     </div>
                                 </div>

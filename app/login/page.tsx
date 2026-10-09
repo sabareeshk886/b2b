@@ -33,6 +33,7 @@ function LoginForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const justRegistered = searchParams.get('registered') === '1';
+    const justReset = searchParams.get('reset') === '1';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,6 +78,11 @@ function LoginForm() {
                     {justRegistered && !errorMsg && (
                         <div className="mb-6 p-4 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-medium">
                             Registration successful. Sign in with your company email and password.
+                        </div>
+                    )}
+                    {justReset && !errorMsg && (
+                        <div className="mb-6 p-4 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-medium">
+                            Password updated. Sign in with your new password.
                         </div>
                     )}
                     {errorMsg && (
