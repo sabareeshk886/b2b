@@ -26,7 +26,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
     const displayCompanyName = session?.user.companyName ?? '';
     const displayUserName = session?.user.name || session?.user.email || '';
-    const isAdmin = session?.user.role === 'admin';
+    const isPlatformAdmin = session?.user.isPlatformAdmin === true;
     const handleLogout = () => signOut({ redirectTo: '/login' });
 
     return (
@@ -61,7 +61,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                     })}
 
                     {/* Admin Section */}
-                    {isAdmin && (
+                    {isPlatformAdmin && (
                         <div className="pt-6 mt-6 border-t border-[#EBEBEB]">
                             <p className="text-[10px] font-bold text-[#717171] uppercase px-4 mb-2 tracking-widest">Admin</p>
                             <Link

@@ -34,6 +34,8 @@ export const users = pgTable('users', {
     email: text('email').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
     role: userRoleEnum('role').default('user').notNull(),
+    // Fernway staff who manage the shared trip catalog; unrelated to the per-agency role
+    isPlatformAdmin: boolean('is_platform_admin').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

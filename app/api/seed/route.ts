@@ -5,7 +5,7 @@ import { trips, tripPricing, destinations } from '@/db/schema';
 
 export async function POST(request: NextRequest) {
     const user = await getSessionUser();
-    if (!user || user.role !== 'admin') {
+    if (!user?.isPlatformAdmin) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: user ? 403 : 401 });
     }
 

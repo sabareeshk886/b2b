@@ -7,6 +7,7 @@ declare module 'next-auth' {
         companyId: string;
         companyName: string;
         role: UserRole;
+        isPlatformAdmin: boolean;
     }
     interface Session {
         user: {
@@ -14,6 +15,7 @@ declare module 'next-auth' {
             companyId: string;
             companyName: string;
             role: UserRole;
+            isPlatformAdmin: boolean;
         } & DefaultSession['user'];
     }
 }

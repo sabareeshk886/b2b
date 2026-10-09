@@ -47,6 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     companyId: row.company.id,
                     companyName: row.company.name,
                     role: row.user.role,
+                    isPlatformAdmin: row.user.isPlatformAdmin,
                 };
             },
         }),

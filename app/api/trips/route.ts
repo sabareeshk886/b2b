@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     const user = await getSessionUser();
-    if (!user || user.role !== 'admin') {
+    if (!user?.isPlatformAdmin) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: user ? 403 : 401 });
     }
 

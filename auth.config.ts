@@ -1,7 +1,7 @@
 import type { NextAuthConfig, User } from 'next-auth';
 
 // Claims we add to the JWT (next-auth/jwt can't be augmented through its re-export)
-type AppClaims = { userId: string; companyId: string; companyName: string; role: User['role'] };
+type AppClaims = { userId: string; companyId: string; companyName: string; role: User['role']; isPlatformAdmin?: boolean };
 
 // Edge-safe config shared by middleware and the full auth setup in auth.ts.
 // Must not import the database or bcrypt.
@@ -18,7 +18,7 @@ export const authConfig = {
 
             if (pathname.startsWith('/dashboard/admin')) {
                 if (!user) return false;
-                if (user.role !== 'admin') return Response.redirect(new URL('/dashboard', nextUrl));
+                if (!user.isPlatformAdmin) return Response.redirect(new URL('/dashboard', nextUrl));
                 return true;
             }
             if (pathname.startsWith('/dashboard')) return !!user;
@@ -37,6 +37,7 @@ export const authConfig = {
                 token.companyId = user.companyId;
                 token.companyName = user.companyName;
                 token.role = user.role;
+                token.isPlatformAdmin = user.isPlatformAdmin;
             }
             return token;
         },
@@ -46,6 +47,7 @@ export const authConfig = {
             session.user.companyId = claims.companyId;
             session.user.companyName = claims.companyName;
             session.user.role = claims.role;
+            session.user.isPlatformAdmin = claims.isPlatformAdmin === true;
             return session;
         },
     },

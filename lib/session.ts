@@ -12,3 +12,10 @@ export async function requireAdmin() {
     if (!user || user.role !== 'admin') throw new Error('Unauthorized');
     return user;
 }
+
+/** Throws unless the caller is a Fernway platform admin (manages the shared trip catalog). */
+export async function requirePlatformAdmin() {
+    const user = await getSessionUser();
+    if (!user?.isPlatformAdmin) throw new Error('Unauthorized');
+    return user;
+}
