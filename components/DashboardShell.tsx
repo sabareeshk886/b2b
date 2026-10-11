@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
@@ -16,12 +16,15 @@ import {
     Globe,
     Bell,
     ChevronDown,
-    Shield
+    Shield,
+    Menu,
+    X
 } from 'lucide-react';
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
     const { data: session } = useSession();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const pathname = usePathname();
 
     const displayCompanyName = session?.user.companyName ?? '';
@@ -29,16 +32,51 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     const isPlatformAdmin = session?.user.isPlatformAdmin === true;
     const handleLogout = () => signOut({ redirectTo: '/login' });
 
+    // Close the mobile drawer after navigating
+    useEffect(() => {
+        setIsSidebarOpen(false);
+    }, [pathname]);
+
+    // Stop the page behind the open drawer from scrolling
+    useEffect(() => {
+        document.body.style.overflow = isSidebarOpen ? 'hidden' : '';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isSidebarOpen]);
+
     return (
         <div className="min-h-screen bg-white">
-            {/* Sidebar */}
-            <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-[#EBEBEB] p-6 z-50">
-                <Link href="/" className="flex items-center space-x-2 text-[#006A4E] mb-10 pl-2">
-                    <Globe className="w-6 h-6" />
-                    <span className="text-xl font-black tracking-tighter">FERNWAY</span>
-                </Link>
+            {/* Mobile drawer backdrop */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                    aria-hidden="true"
+                />
+            )}
 
-                <nav className="space-y-1">
+            {/* Sidebar: always visible on desktop, slide-in drawer below lg */}
+            <aside
+                className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-[#EBEBEB] p-6 z-50 flex flex-col transition-transform duration-200 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}
+                aria-label="Dashboard navigation"
+            >
+                <div className="flex items-center justify-between mb-10 pl-2">
+                    <Link href="/" className="flex items-center space-x-2 text-[#006A4E]">
+                        <Globe className="w-6 h-6" />
+                        <span className="text-xl font-black tracking-tighter">FERNWAY</span>
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="p-2 -mr-2 rounded-full hover:bg-gray-50 text-[#717171] lg:hidden"
+                        aria-label="Close menu"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <nav className="space-y-1 flex-1 overflow-y-auto">
                     {[
                         { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
                         { icon: Package, label: 'Trip Catalog', href: '/dashboard/trips' },
@@ -75,7 +113,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                     )}
                 </nav>
 
-                <div className="absolute bottom-6 left-6 right-6">
+                <div className="pt-4">
                     <button
                         type="button"
                         onClick={handleLogout}
@@ -88,32 +126,42 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             </aside>
 
             {/* Main Content */}
-            <div className="ml-64">
+            <div className="lg:ml-64">
                 {/* Top Header */}
-                <header className="bg-white/80 backdrop-blur-md border-b border-[#EBEBEB] px-8 py-4 sticky top-0 z-40 h-20 flex items-center">
-                    <div className="flex items-center justify-between w-full">
-                        <div>
-                            <h1 className="text-xl font-bold text-[#222222]">{displayCompanyName}</h1>
-                            <p className="text-xs text-[#717171] font-medium">B2B Partner Dashboard</p>
+                <header className="bg-white/80 backdrop-blur-md border-b border-[#EBEBEB] px-4 sm:px-6 lg:px-8 py-4 sticky top-0 z-30 h-16 lg:h-20 flex items-center">
+                    <div className="flex items-center justify-between w-full gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <button
+                                type="button"
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="p-2 -ml-2 rounded-full hover:bg-gray-50 text-[#222222] lg:hidden"
+                                aria-label="Open menu"
+                            >
+                                <Menu className="w-6 h-6" />
+                            </button>
+                            <div className="min-w-0">
+                                <h1 className="text-base lg:text-xl font-bold text-[#222222] truncate">{displayCompanyName}</h1>
+                                <p className="text-xs text-[#717171] font-medium hidden sm:block">B2B Partner Dashboard</p>
+                            </div>
                         </div>
-                        <div className="flex items-center space-x-3">
-                            <button className="relative p-3 hover:bg-gray-50 rounded-full transition-colors border border-transparent hover:border-[#EBEBEB]">
+                        <div className="flex items-center space-x-1 sm:space-x-3 shrink-0">
+                            <button className="relative p-3 hover:bg-gray-50 rounded-full transition-colors border border-transparent hover:border-[#EBEBEB] hidden sm:block">
                                 <Bell className="w-5 h-5 text-[#222222]" />
                                 <span className="absolute top-3 right-3 w-2 h-2 bg-[#006A4E] rounded-full border-2 border-white"></span>
                             </button>
-                            
+
                             <div className="relative">
-                                <div 
-                                    className="flex items-center space-x-3 border border-[#EBEBEB] p-1.5 pl-3 rounded-full cursor-pointer hover:shadow-airbnb transition-all ml-2 bg-white"
+                                <div
+                                    className="flex items-center space-x-2 sm:space-x-3 border border-[#EBEBEB] p-1.5 sm:pl-3 rounded-full cursor-pointer hover:shadow-airbnb transition-all bg-white"
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 >
-                                    <span className="text-sm font-bold text-[#222222]">{displayUserName}</span>
+                                    <span className="text-sm font-bold text-[#222222] hidden sm:inline max-w-[160px] truncate">{displayUserName}</span>
                                     <div className="w-8 h-8 rounded-full bg-[#222222] flex items-center justify-center text-white text-xs font-bold">
                                         {displayUserName.charAt(0).toUpperCase()}
                                     </div>
-                                    <ChevronDown className="w-4 h-4 text-[#717171] mr-1" />
+                                    <ChevronDown className="w-4 h-4 text-[#717171] mr-1 hidden sm:block" />
                                 </div>
-                                
+
                                 {isDropdownOpen && (
                                     <div className="absolute right-0 mt-3 w-48 bg-white border border-[#EBEBEB] rounded-2xl shadow-xl py-2 z-50">
                                         <button
@@ -135,11 +183,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                 </header>
 
                 {/* Page Content */}
-                <main className="p-8 max-w-7xl mx-auto">
+                <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
                     {children}
                 </main>
             </div>
         </div>
     );
 }
-

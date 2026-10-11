@@ -12,7 +12,12 @@ export async function GET(request: NextRequest) {
                 tripPricing: true,
             },
         });
-        
+
+        // Trips with a real price come first; "price on request" trips go last
+        const hasPrice = (trip: (typeof allTrips)[number]) =>
+            Number(trip.basePrice) > 0 || trip.tripPricing.some((p) => Number(p.pricePerPerson) > 0);
+        allTrips.sort((a, b) => Number(hasPrice(b)) - Number(hasPrice(a)) || a.code.localeCompare(b.code));
+
         return NextResponse.json({ trips: allTrips });
     } catch (error: any) {
         console.error('Error fetching trips:', error);

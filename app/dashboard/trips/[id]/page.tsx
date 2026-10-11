@@ -164,19 +164,19 @@ export default function TripDetailPage({ params }: { params: any }) {
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20">
             {/* Header / Breadcrumb */}
-            <div className="flex items-center space-x-2 text-sm font-bold text-[#717171] uppercase tracking-widest">
-                <Link href="/dashboard/trips" className="hover:text-[#222222] transition-colors">Catalog</Link>
-                <ChevronRight className="w-4 h-4" />
-                <span className="text-[#222222]">{displayTitle?.toUpperCase?.() || trip.title}</span>
+            <div className="flex items-center space-x-2 text-xs sm:text-sm font-bold text-[#717171] uppercase tracking-widest min-w-0">
+                <Link href="/dashboard/trips" className="hover:text-[#222222] transition-colors shrink-0">Catalog</Link>
+                <ChevronRight className="w-4 h-4 shrink-0" />
+                <span className="text-[#222222] truncate">{displayTitle?.toUpperCase?.() || trip.title}</span>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-12">
+            <div className="grid lg:grid-cols-3 gap-8">
                 {/* Left Column: Content */}
-                <div className="lg:col-span-2 space-y-10">
+                <div className="lg:col-span-2 space-y-10 min-w-0">
                     <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h1 className="text-4xl font-black text-[#222222] tracking-tighter">{displayTitle?.toUpperCase?.() || trip.title}</h1>
-                            <span className="px-4 py-1.5 bg-[#222222] text-white text-[10px] font-black rounded-full uppercase tracking-widest">
+                        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#222222] tracking-tighter break-words min-w-0">{displayTitle?.toUpperCase?.() || trip.title}</h1>
+                            <span className="shrink-0 px-4 py-1.5 bg-[#222222] text-white text-[10px] font-black rounded-full uppercase tracking-widest">
                                 {trip.category || trip.region || 'Premium'}
                             </span>
                         </div>
@@ -204,12 +204,12 @@ export default function TripDetailPage({ params }: { params: any }) {
                     {/* Tabs Navigation */}
                     <div className="space-y-8">
                         <div className="border-b border-[#EBEBEB]">
-                            <div className="flex space-x-12">
+                            <div className="flex gap-6 sm:gap-12 overflow-x-auto">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`pb-4 text-xs font-black uppercase tracking-[0.2em] relative transition-colors ${
+                                        className={`pb-4 text-xs font-black uppercase tracking-[0.2em] relative transition-colors whitespace-nowrap ${
                                             activeTab === tab ? 'text-[#222222]' : 'text-[#717171] hover:text-[#222222]'
                                         }`}
                                     >
@@ -400,184 +400,184 @@ export default function TripDetailPage({ params }: { params: any }) {
 
                         </div>
                     </div>
+                </div>
 
-                    {/* Right Column: Pricing Sidebar */}
-                    <div className="lg:col-span-1">
-                        <div className="sticky top-24 bg-white border border-[#EBEBEB] rounded-3xl p-8 shadow-airbnb space-y-6">
-                            {/* Header price block */}
-                            <div>
-                                <h3 className="text-xs font-black text-[#717171] uppercase tracking-[0.2em] mb-3">Net B2B Rate</h3>
-                                {isPriceAvailable ? (
-                                    <div className="space-y-2">
-                                        <div className="flex items-baseline space-x-2">
-                                            <span className="text-4xl font-black text-[#222222]">₹{ppp.toLocaleString()}</span>
-                                            <span className="text-sm font-bold text-[#717171]">/ person</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <div className="inline-flex items-center px-2 py-1 bg-emerald-50 text-[#006A4E] text-[10px] font-black rounded uppercase tracking-widest">
-                                                For {numPax} Pax
-                                            </div>
-                                            <span className="text-sm font-black text-[#717171]">Total Net: <span className="text-[#222222]">₹{totalB2BPrice.toLocaleString()}</span></span>
-                                        </div>
+                {/* Right Column: Pricing Sidebar */}
+                <div className="lg:col-span-1 min-w-0">
+                    <div className="lg:sticky lg:top-24 bg-white border border-[#EBEBEB] rounded-3xl p-5 sm:p-8 lg:p-6 shadow-airbnb space-y-6">
+                        {/* Header price block */}
+                        <div>
+                            <h3 className="text-xs font-black text-[#717171] uppercase tracking-[0.2em] mb-3">Net B2B Rate</h3>
+                            {isPriceAvailable ? (
+                                <div className="space-y-2">
+                                    <div className="flex items-baseline space-x-2">
+                                        <span className="text-4xl font-black text-[#222222]">₹{ppp.toLocaleString()}</span>
+                                        <span className="text-sm font-bold text-[#717171]">/ person</span>
                                     </div>
-                                ) : (
-                                    <p className="text-2xl font-black text-orange-500">Price on Request</p>
-                                )}
-                            </div>
-
-                            {/* Pricing Tiers Table */}
-                            {hasPricingTiers && trip.tripPricing && trip.tripPricing.length > 0 && (
-                                <div className="rounded-2xl border border-[#EBEBEB] overflow-hidden">
-                                    <div className="bg-gray-50 px-4 py-2 border-b border-[#EBEBEB]">
-                                        <span className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Pax-Based Pricing</span>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <div className="inline-flex items-center px-2 py-1 bg-emerald-50 text-[#006A4E] text-[10px] font-black rounded uppercase tracking-widest">
+                                            For {numPax} Pax
+                                        </div>
+                                        <span className="text-sm font-black text-[#717171]">Total Net: <span className="text-[#222222]">₹{totalB2BPrice.toLocaleString()}</span></span>
                                     </div>
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b border-[#EBEBEB]">
-                                                <th className="text-left px-4 py-2 text-[10px] font-black text-[#717171] uppercase tracking-widest">Pax</th>
-                                                <th className="text-right px-4 py-2 text-[10px] font-black text-[#717171] uppercase tracking-widest">Per Person</th>
-                                                <th className="text-right px-4 py-2 text-[10px] font-black text-[#717171] uppercase tracking-widest">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {[...trip.tripPricing].sort((a, b) => a.minPax - b.minPax).map((tier, idx) => {
-                                                const isActive = numPax >= tier.minPax && (tier.maxPax === null || numPax <= tier.maxPax);
-                                                const pricePerPerson = parseFloat(tier.pricePerPerson);
-                                                return (
-                                                    <tr key={idx} className={`border-b border-[#EBEBEB] last:border-0 transition-colors ${isActive ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                                                        <td className="px-4 py-2.5 font-bold text-[#222222]">
-                                                            {tier.maxPax ? `${tier.minPax}–${tier.maxPax}` : `${tier.minPax}+`}
-                                                            {isActive && <span className="ml-1.5 text-[9px] text-[#006A4E] font-black uppercase">✓ Active</span>}
-                                                        </td>
-                                                        <td className="px-4 py-2.5 text-right font-black text-[#222222]">₹{pricePerPerson.toLocaleString()}</td>
-                                                        <td className="px-4 py-2.5 text-right font-bold text-[#717171]">₹{(pricePerPerson * tier.minPax).toLocaleString()}</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
                                 </div>
+                            ) : (
+                                <p className="text-2xl font-black text-orange-500">Price on Request</p>
                             )}
+                        </div>
 
-                            {/* Margin & Customer Tool */}
-                            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-5">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-black text-[#222222] uppercase tracking-tighter">Quote Setup</span>
-                                    <Calculator className="w-4 h-4 text-[#717171]" />
+                        {/* Pricing Tiers Table */}
+                        {hasPricingTiers && trip.tripPricing && trip.tripPricing.length > 0 && (
+                            <div className="rounded-2xl border border-[#EBEBEB] overflow-x-auto">
+                                <div className="bg-gray-50 px-4 py-2 border-b border-[#EBEBEB]">
+                                    <span className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Pax-Based Pricing</span>
                                 </div>
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Passenger Count</label>
-                                            <select 
-                                                value={numPax}
-                                                onChange={(e) => setNumPax(Number(e.target.value))}
-                                                className="w-full bg-white border border-[#EBEBEB] px-3 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
-                                            >
-                                                {generatedPaxOptions.map((n: number) => <option key={n} value={n}>{n} Pax</option>)}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Markup (₹)</label>
-                                            </div>
-                                            <input 
-                                                type="number"
-                                                value={yourMargin}
-                                                onChange={(e) => setYourMargin(Number(e.target.value))}
-                                                className="w-full bg-white border border-[#EBEBEB] px-3 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
-                                            />
-                                        </div>
-                                    </div>
+                                <table className="w-full text-xs sm:text-sm">
+                                    <thead>
+                                        <tr className="border-b border-[#EBEBEB]">
+                                            <th className="text-left px-3 py-2 text-[10px] font-black text-[#717171] uppercase tracking-widest">Pax</th>
+                                            <th className="text-right px-3 py-2 text-[10px] font-black text-[#717171] uppercase tracking-widest">Per Person</th>
+                                            <th className="text-right px-3 py-2 text-[10px] font-black text-[#717171] uppercase tracking-widest">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {[...trip.tripPricing].sort((a, b) => a.minPax - b.minPax).map((tier, idx) => {
+                                            const isActive = numPax >= tier.minPax && (tier.maxPax === null || numPax <= tier.maxPax);
+                                            const pricePerPerson = parseFloat(tier.pricePerPerson);
+                                            return (
+                                                <tr key={idx} className={`border-b border-[#EBEBEB] last:border-0 transition-colors ${isActive ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
+                                                    <td className="px-3 py-2.5 font-bold text-[#222222]">
+                                                        {tier.maxPax ? `${tier.minPax}–${tier.maxPax}` : `${tier.minPax}+`}
+                                                        {isActive && <span className="block text-[9px] text-[#006A4E] font-black uppercase">✓ Active</span>}
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-right font-black text-[#222222]">₹{pricePerPerson.toLocaleString()}</td>
+                                                    <td className="px-3 py-2.5 text-right font-bold text-[#717171]">₹{(pricePerPerson * tier.minPax).toLocaleString()}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
+                        {/* Margin & Customer Tool */}
+                        <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-black text-[#222222] uppercase tracking-tighter">Quote Setup</span>
+                                <Calculator className="w-4 h-4 text-[#717171]" />
+                            </div>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Customer Name</label>
+                                        <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Passenger Count</label>
+                                        <select 
+                                            value={numPax}
+                                            onChange={(e) => setNumPax(Number(e.target.value))}
+                                            className="w-full bg-white border border-[#EBEBEB] px-3 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
+                                        >
+                                            {generatedPaxOptions.map((n: number) => <option key={n} value={n}>{n} Pax</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Markup (₹)</label>
+                                        </div>
                                         <input 
-                                            type="text"
-                                            placeholder="Enter customer name"
-                                            value={customerName}
-                                            onChange={(e) => setCustomerName(e.target.value)}
+                                            type="number"
+                                            value={yourMargin}
+                                            onChange={(e) => setYourMargin(Number(e.target.value))}
+                                            className="w-full bg-white border border-[#EBEBEB] px-3 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Customer Name</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="Enter customer name"
+                                        value={customerName}
+                                        onChange={(e) => setCustomerName(e.target.value)}
+                                        className="w-full bg-white border border-[#EBEBEB] px-4 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Phone Number</label>
+                                        <input 
+                                            type="tel"
+                                            placeholder="9876543210"
+                                            value={customerPhone}
+                                            onChange={(e) => setCustomerPhone(e.target.value)}
                                             className="w-full bg-white border border-[#EBEBEB] px-4 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
                                         />
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Phone Number</label>
-                                            <input 
-                                                type="tel"
-                                                placeholder="9876543210"
-                                                value={customerPhone}
-                                                onChange={(e) => setCustomerPhone(e.target.value)}
-                                                className="w-full bg-white border border-[#EBEBEB] px-4 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Travel Date</label>
-                                            <input 
-                                                type="date"
-                                                value={travelDate}
-                                                onChange={(e) => setTravelDate(e.target.value)}
-                                                className="w-full bg-white border border-[#EBEBEB] px-4 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="pt-4 border-t border-gray-200 space-y-1">
-                                    {isPriceAvailable && (
-                                        <div className="flex justify-between text-[10px] font-bold text-[#717171] mb-1">
-                                            <span>Net B2B (per pax)</span>
-                                            <span>₹{ppp.toLocaleString()}</span>
-                                        </div>
-                                    )}
-                                    <div className="flex justify-between items-baseline">
-                                        <p className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Final Client Price</p>
-                                        <p className="text-xl font-black text-[#222222]">
-                                            {isPriceAvailable 
-                                                ? `₹${Math.round(clientPrice / numPax).toLocaleString()}` 
-                                                : `Base + ₹${Math.round(yourMargin).toLocaleString()}`}
-                                            <span className="text-xs font-bold text-[#717171] ml-1">/ person</span>
-                                        </p>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Travel Date</label>
+                                        <input 
+                                            type="date"
+                                            value={travelDate}
+                                            onChange={(e) => setTravelDate(e.target.value)}
+                                            className="w-full bg-white border border-[#EBEBEB] px-4 py-2.5 rounded-xl font-bold text-[#222222] text-sm focus:outline-none focus:border-[#222222]"
+                                        />
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="space-y-3">
-                                <Link 
-                                    href={`/dashboard/quotes/new?tripId=${trip.id}&pax=${numPax}&margin=${yourMargin}`}
-                                    className="block"
-                                >
-                                    <button 
-                                        className="w-full h-14 bg-[#006A4E] text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#005a42] transition-all flex items-center justify-center space-x-3 shadow-md active:scale-95"
-                                    >
-                                        <Send className="w-5 h-5" />
-                                        <span>Create Quote</span>
-                                    </button>
-                                </Link>
-
-                                <QuotePdfDownload
-                                    tripId={trip.id}
-                                    trip={trip}
-                                    customerName={customerName}
-                                    travelDate={travelDate}
-                                    numPax={numPax}
-                                    pricePerPerson={
-                                        isPriceAvailable
-                                            ? Math.round(clientPrice / numPax)
-                                            : yourMargin
-                                    }
-                                />
-
-                                {trip.pdfUrl && (
-                                    <button 
-                                        onClick={() => window.open(trip.pdfUrl!, '_blank')}
-                                        className="w-full h-12 border border-[#EBEBEB] text-[#717171] rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center space-x-2"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                        <span>Fernway Brochure (PDF)</span>
-                                    </button>
+                            <div className="pt-4 border-t border-gray-200 space-y-1">
+                                {isPriceAvailable && (
+                                    <div className="flex justify-between text-[10px] font-bold text-[#717171] mb-1">
+                                        <span>Net B2B (per pax)</span>
+                                        <span>₹{ppp.toLocaleString()}</span>
+                                    </div>
                                 )}
+                                <div className="flex justify-between items-baseline">
+                                    <p className="text-[10px] font-black text-[#717171] uppercase tracking-widest">Final Client Price</p>
+                                    <p className="text-xl font-black text-[#222222]">
+                                        {isPriceAvailable 
+                                            ? `₹${Math.round(clientPrice / numPax).toLocaleString()}` 
+                                            : `Base + ₹${Math.round(yourMargin).toLocaleString()}`}
+                                        <span className="text-xs font-bold text-[#717171] ml-1">/ person</span>
+                                    </p>
+                                </div>
                             </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Link 
+                                href={`/dashboard/quotes/new?tripId=${trip.id}&pax=${numPax}&margin=${yourMargin}`}
+                                className="block"
+                            >
+                                <button 
+                                    className="w-full h-14 bg-[#006A4E] text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#005a42] transition-all flex items-center justify-center space-x-3 shadow-md active:scale-95"
+                                >
+                                    <Send className="w-5 h-5" />
+                                    <span>Create Quote</span>
+                                </button>
+                            </Link>
+
+                            <QuotePdfDownload
+                                tripId={trip.id}
+                                trip={trip}
+                                customerName={customerName}
+                                travelDate={travelDate}
+                                numPax={numPax}
+                                pricePerPerson={
+                                    isPriceAvailable
+                                        ? Math.round(clientPrice / numPax)
+                                        : yourMargin
+                                }
+                            />
+
+                            {trip.pdfUrl && (
+                                <button 
+                                    onClick={() => window.open(trip.pdfUrl!, '_blank')}
+                                    className="w-full h-12 border border-[#EBEBEB] text-[#717171] rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center space-x-2"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    <span>Fernway Brochure (PDF)</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
